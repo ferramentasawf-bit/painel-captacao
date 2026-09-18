@@ -169,11 +169,25 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      <div class="overflow-x-auto mt-5"><table id="tCanal" class="w-full text-[12.5px] tabnum"></table></div>
     </section>
 
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Base de aquisição</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Captação da Base de Alunos</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">De todos os alunos de cada cluster, quantos já se inscreveram neste webinar. Clusters contados a partir da data do evento.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Alunos 7D a 30D captados</div>
+       <div class="mt-1"><span id="penRecent" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
+     </div>
+     <div id="penGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6"></div>
+     <p class="text-[11px] text-muted-foreground mt-4">Calculado sobre a aba Base AQUISIÇÃO (colunas lead e lead tel). Não muda com os filtros de canal, perfil e score.</p>
+    </section>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
      <section class="rounded-xl border bg-white px-7 py-7">
-      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Base de aquisição</span>
-      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Clusters de Aluno</h2>
-      <p class="text-[13px] text-muted-foreground mt-1">Última compra contada a partir da data do evento.</p>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Leads do webinar</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Perfil dos Leads</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Peso de cada cluster dentro dos leads captados.</p>
       <div id="bSeg" class="flex flex-col gap-3 mt-5"></div>
      </section>
      <section class="rounded-xl border bg-white px-7 py-7">
@@ -264,7 +278,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
 
 <script>
 // ===== CONFIGURAÇÃO =====
-const WEBHOOK_URL = 'https://webhook.pauloaguiarx.com.br/webhook/painel-captacao';
+const WEBHOOK_URL = 'https://n8n.pauloaguiarx.com.br/webhook/painel-captacao';
 const ATUALIZAR_A_CADA_MIN = 5;
 // =========================
 const EMBED = null;
@@ -403,8 +417,34 @@ function renderCap(){
   const sv = SEGS.map(sg=>[sg,sum(rs.filter(r=>r[C.seg]===sg),'l')]), sm = Math.max(...sv.map(v=>v[1]),1);
   const hb = (lbl,v,m,c,extra) => `<div class="grid grid-cols-[96px_1fr_92px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${lbl}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/m*100}%;background:${c}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${extra}</span></span></div>`;
   $('bSeg').innerHTML = sv.map(([k,v])=>hb(k,v,sm,col[k],pct(v,L,0))).join('');
+  renderPen();
   const gv = Object.entries(DATA.grupos), gm = Math.max(...gv.map(g=>g[1]));
   $('bGrp').innerHTML = gv.map(([k,v])=>hb(k,v,gm,'#10b981',pct(v,DATA.grupos_total,0))).join('');
+}
+
+function renderPen(){
+  const ab = DATA.alunos_base;
+  const box = $('penGrid');
+  if(!ab){ box.innerHTML = `<div class="col-span-full rounded-lg border border-dashed p-5 text-[12px] text-muted-foreground">Adicione o nó "Base Aquisição" no n8n para ver esta métrica.</div>`; $('penRecent').textContent='–'; return; }
+  const ord = ['Aluno 7d','Aluno 14d','Aluno 30d','Aluno antigo'];
+  const cor = {'Aluno 7d':'#10b981','Aluno 14d':'#34d399','Aluno 30d':'#fb8c45','Aluno antigo':'#a1a1aa'};
+  const d = s => s ? `${s.slice(8)}/${s.slice(5,7)}` : '';
+  box.innerHTML = ord.filter(k=>ab[k]).map(k=>{ const {total,captados,de,ate} = ab[k];
+    const janela = k==='Aluno antigo' ? `até ${d(ate)}` : `${d(de)} a ${d(ate)}`;
+    return `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-5">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">${k.replace('Aluno ','Alunos ').toUpperCase()}</div>
+      <div class="text-[10px] text-zinc-500 mt-0.5">Compras ${janela}</div>
+      <div class="text-[30px] font-bold text-emerald-600 mt-3 tabnum">${pct(captados,total)}</div>
+      <div class="h-2 rounded-full bg-white border border-emerald-100 overflow-hidden mt-2"><i class="block h-full" style="width:${pctN(captados,total)}%;background:${cor[k]}"></i></div>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Captados</div><div class="text-[15px] font-bold text-zinc-900 tabnum">${fmt(captados)}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Base total</div><div class="text-[15px] font-bold text-amber-500 tabnum">${fmt(total)}</div></div>
+      </div>
+      <div class="text-[11px] text-zinc-500 mt-2">Faltam <b class="text-red-500 tabnum">${fmt(total-captados)}</b> alunos</div>
+    </div>`; }).join('');
+  const rec = ['Aluno 7d','Aluno 14d','Aluno 30d'].filter(k=>ab[k]);
+  const tc = rec.reduce((s,k)=>s+ab[k].captados,0), tt = rec.reduce((s,k)=>s+ab[k].total,0);
+  $('penRecent').textContent = `${pct(tc,tt)} (${fmt(tc)} de ${fmt(tt)})`;
 }
 
 function renderComp(){
