@@ -102,16 +102,13 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      </div>
      <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-msg"/></svg>Leads nos grupos</div>
-      <div id="kGr" class="text-[24px] font-bold text-emerald-600 mt-2 tabnum"></div>
-      <div class="flex gap-6 mt-3">
-       <div><div class="text-[9px] font-semibold uppercase tracking-wider text-emerald-600/80">No grupo</div><div id="kGrN" class="text-[11px] font-bold text-emerald-700 mt-1 tabnum"></div></div>
-       <div><div class="text-[9px] font-semibold uppercase tracking-wider text-emerald-600/80">Fora</div><div id="kGrF" class="text-[11px] font-bold text-emerald-700 mt-1 tabnum"></div></div>
-      </div>
-      <div id="kGrTot" class="text-[9px] text-emerald-600 mt-2"></div>
+      <div id="kGr" class="text-[32px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="kGrSub" class="text-[9.5px] text-emerald-600/80 mt-1"></div>
      </div>
      <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
-      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-target"/></svg>Score da pesquisa</div>
-      <div id="kFx" class="mt-2"></div>
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-file"/></svg>Pesquisa de qualificação</div>
+      <div id="kResp" class="text-[32px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="kRespSub" class="text-[9.5px] text-amber-600/80 mt-1"></div>
      </div>
     </div>
 
@@ -199,6 +196,19 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      </section>
     </div>
 
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-target"/></svg>Yay Forms</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Score da Pesquisa</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Distribuição das faixas entre quem respondeu a pesquisa.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Faixas A + B</div>
+       <div class="mt-1"><span id="fxAB" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
+     </div>
+     <div id="bFx" class="flex flex-col gap-3 mt-5"></div>
+    </section>
+
     </div>
 
     <div id="v-composicao" hidden>
@@ -281,6 +291,30 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
 // ===== CONFIGURAÇÃO =====
 const WEBHOOK_URL = 'https://n8n.pauloaguiarx.com.br/webhook/painel-captacao';
 const ATUALIZAR_A_CADA_MIN = 5;
+// Imagem de cada canal (utm_source). Pode ser o site da ferramenta (vira o ícone dela)
+// ou uma imagem: link completo (https://...) ou o nome de um arquivo enviado ao repositório (ex.: 'awsales.png').
+// Canal sem imagem mostra as iniciais.
+const CANAL_IMAGENS = {
+  'whatsapp': 'sendflow.png',
+  'instagram': 'instagram.png',
+  'youtube': 'youtube.png',
+  'tiktok': 'tiktok.png',
+  'activecampaign': 'activecampaign.png',
+  'meta': 'meta.png',
+  'awsales': 'awsales.png',
+  'sendflow': 'sendflow.png',
+  'yay-form': 'yayforms.png',
+  'area-de-membros': 'cademi.png',
+  'sem utm': 'sem-utm.png',
+};
+// Selo de cada cluster de aluno (arquivo enviado ao repositório)
+const CLUSTER_IMAGENS = {
+  'Aluno 7d': 'aluno-7d.png',
+  'Aluno 14d': 'aluno-14d.png',
+  'Aluno 30d': 'aluno-30d.png',
+  'Aluno antigo': 'aluno-antigo.png',
+  'Não aluno': 'nao-aluno.png',
+};
 // =========================
 const EMBED = null;
 let DATA, C, rows, canais = [];
@@ -288,7 +322,7 @@ const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('pt-BR');
 const pctN = (a,b) => b ? a/b*100 : 0;
 const pct = (a,b,d=1) => b ? pctN(a,b).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%' : '–';
-const SEGS = ['Não aluno','Aluno 7d','Aluno 14d','Aluno 30d','Aluno antigo'];
+const SEGS = ['Aluno 7d','Aluno 14d','Aluno 30d','Aluno antigo','Não aluno'];
 const FXS = ['A','B','C','D','E','F','Sem score'];
 const sum = (rs,k) => rs.reduce((s,r)=>s+r[C[k]],0);
 const ddmm = d => `${d.slice(8)}/${d.slice(5,7)}`;
@@ -346,13 +380,17 @@ function renderCap(){
   $('kLeadsSub').textContent = `Inscrições de ${ddmm(dias[0])} a ${ddmm(dias.at(-1))}`;
   $('kNa').textContent = pct(na,L,0); $('kNaN').textContent = fmt(na)+' leads';
   $('kAl').textContent = pct(al,L,0); $('kAlN').textContent = fmt(al)+' leads';
-  $('kGr').textContent = pct(gr,L);
-  $('kGrN').textContent = fmt(gr)+' leads'; $('kGrF').textContent = fmt(L-gr)+' leads';
-  $('kGrTot').textContent = `${fmt(DATA.grupos_total)} membros no total da SendFlow`;
+  const Ltot = sum(rows,'l'), temFiltro = !!(state.canal||state.seg||state.faixa);
+  $('kGr').textContent = pct(DATA.grupos_total, Ltot);
+  $('kGrSub').textContent = `${fmt(DATA.grupos_total)} membros na SendFlow para ${fmt(Ltot)} leads` + (temFiltro ? ' (não muda com filtros)' : '');
   $('pillGrp').textContent = `${fmt(DATA.grupos_total)} membros nos grupos`;
   const semScore = sum(rs.filter(r=>r[C.faixa]==='Sem score'),'l'), resp = L - semScore;
-  $('kFx').innerHTML = `<div class="flex items-end justify-between border-b border-amber-200/70 pb-2 mb-1"><div><div class="text-[8.5px] font-bold uppercase tracking-wider text-amber-700">Pesquisas respondidas</div><div class="text-[9.5px] text-amber-600/80 mt-0.5">${fmt(resp)} de ${fmt(L)} leads</div></div><div class="text-[22px] font-bold text-amber-600 tabnum leading-none">${pct(resp,L)}</div></div>` + FXS.filter(f=>f!=='Sem score').map(f=>{const n=sum(rs.filter(r=>r[C.faixa]===f),'l');
-    return `<div class="flex items-baseline justify-between mt-1.5"><span class="text-[8.5px] font-semibold uppercase tracking-tight text-amber-700">${f==='Sem score'?'Sem score':'Faixa '+f} (${fmt(n)})</span><span class="text-[13px] font-bold text-amber-600 tabnum">${pct(n,resp,1)}</span></div>`}).join('') + `<div class="text-[9px] text-amber-600/80 mt-2">Faixas em % de quem respondeu</div>`;
+  $('kResp').textContent = pct(resp,L);
+  $('kRespSub').textContent = `${fmt(resp)} de ${fmt(L)} leads responderam · ${fmt(semScore)} sem resposta`;
+  const fxC = {A:'#10b981',B:'#34d399',C:'#6366f1',D:'#818cf8',E:'#fb8c45',F:'#a1a1aa'};
+  const fv = ['A','B','C','D','E','F'].map(f=>[f,sum(rs.filter(r=>r[C.faixa]===f),'l')]), fm = Math.max(...fv.map(x=>x[1]),1);
+  $('bFx').innerHTML = fv.map(([f,n])=>`<div class="grid grid-cols-[70px_1fr_120px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">Faixa ${f}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${n/fm*100}%;background:${fxC[f]}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${pct(n,resp)}</b> <span class="text-zinc-400">${fmt(n)} leads</span></span></div>`).join('');
+  $('fxAB').textContent = pct(fv[0][1]+fv[1][1], resp);
 
   // ---- timeline
   const byDay = dias.map(d=>rs.filter(r=>r[C.dia]===d));
@@ -405,7 +443,7 @@ function renderCap(){
     const on = state.canal===c;
     const ab = sum(x.filter(r=>r[C.faixa]==='A'||r[C.faixa]==='B'),'l'), ss = sum(x.filter(r=>r[C.faixa]==='Sem score'),'l');
     const td = 'text-right py-2.5 px-3 border-b';
-    t += `<tr tabindex="0" data-c="${c}" class="cursor-pointer ${on?'bg-indigo-50':'hover:bg-zinc-50'}"><td class="${td} !text-left font-semibold text-zinc-900">${c}</td>
+    t += `<tr tabindex="0" data-c="${c}" class="cursor-pointer ${on?'bg-indigo-50':'hover:bg-zinc-50'}"><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${logo(c)}${c}</span></td>
       <td class="${td}"><div class="flex items-center justify-end gap-2.5"><span class="font-semibold">${fmt(l)}</span><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-indigo-500" style="width:${l/maxL*100}%"></i></span></div></td>
       <td class="${td} text-zinc-600">${pct(l,Lt)}</td><td class="${td} text-emerald-600 font-semibold">${pct(sum(x,'g'),l)}</td>
       <td class="${td} text-indigo-600 font-semibold">${pct(sum(x.filter(r=>r[C.seg]==='Não aluno'),'l'),l)}</td>
@@ -419,14 +457,30 @@ function renderCap(){
   const sv = SEGS.map(sg=>[sg,sum(rs.filter(r=>r[C.seg]===sg),'l')]), sm = Math.max(...sv.map(v=>v[1]),1);
   const hb = (lbl,v,m,c,extra) => `<div class="grid grid-cols-[96px_1fr_92px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${lbl}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/m*100}%;background:${c}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${extra}</span></span></div>`;
   const ab = DATA.alunos_base || {};
-  const head = `<div class="grid grid-cols-[96px_1fr_92px_96px] gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1 border-b"><span>Cluster</span><span></span><span class="text-right">Leads</span><span class="text-right">% da base</span></div>`;
+  const head = `<div class="grid grid-cols-[124px_1fr_92px_96px] gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1 border-b"><span>Cluster</span><span></span><span class="text-right">Leads</span><span class="text-right">% da base</span></div>`;
   $('bSeg').innerHTML = head + sv.map(([k,v])=>{
     const b = ab[k], base = b ? `<b class="text-emerald-600">${pct(b.captados,b.total,1)}</b><div class="text-[10px] text-zinc-400">${fmt(b.captados)} de ${fmt(b.total)}</div>` : `<span class="text-zinc-300">–</span>`;
-    return `<div class="grid grid-cols-[96px_1fr_92px_96px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${k}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/sm*100}%;background:${col[k]}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${pct(v,L,0)}</span></span><span class="text-right tabnum leading-tight">${k==='Não aluno'?'<span class="text-zinc-300">–</span>':base}</span></div>`;
+    return `<div class="grid grid-cols-[124px_1fr_92px_96px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700 inline-flex items-center gap-2 whitespace-nowrap">${badge(k)}${k}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/sm*100}%;background:${col[k]}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${pct(v,L,0)}</span></span><span class="text-right tabnum leading-tight">${k==='Não aluno'?'<span class="text-zinc-300">–</span>':base}</span></div>`;
   }).join('') + (DATA.alunos_base ? `<p class="text-[10.5px] text-muted-foreground mt-1">% da base = alunos do cluster na aba Base AQUISIÇÃO que já se inscreveram.</p>` : `<p class="text-[10.5px] text-amber-600 mt-1">Para ver o % da base, adicione o nó "Base Aquisição" no n8n.</p>`);
   renderPen();
   const gv = Object.entries(DATA.grupos), gm = Math.max(...gv.map(g=>g[1]));
   $('bGrp').innerHTML = gv.map(([k,v])=>hb(k,v,gm,'#10b981',pct(v,DATA.grupos_total,0))).join('');
+}
+
+const PAL = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#14b8a6','#8b5cf6','#f97316'];
+function logo(c){
+  const i = Math.max(0, canais.indexOf(c)), src = CANAL_IMAGENS[c] || '';
+  const ini = c.replace(/[^a-z0-9]/gi,' ').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const fb = `<span class="w-5 h-5 rounded grid place-items-center text-white text-[8px] font-bold" style="background:${PAL[i%PAL.length]}">${ini}</span>`;
+  if(!src) return `<span class="w-5 h-5 shrink-0 inline-block">${fb}</span>`;
+  const url = /^https?:|^data:|\.(png|jpe?g|svg|webp|gif)$/i.test(src) ? src : `https://www.google.com/s2/favicons?domain=${encodeURIComponent(src)}&sz=64`;
+  return `<span class="relative w-5 h-5 shrink-0 inline-block">${fb}<img src="${url}" alt="" loading="lazy" class="absolute inset-0 w-5 h-5 rounded object-cover bg-white" onerror="this.remove()"></span>`;
+}
+
+function badge(k, px=20){
+  const src = CLUSTER_IMAGENS[k];
+  if(!src) return `<span class="inline-block shrink-0" style="width:${px}px;height:${px}px"></span>`;
+  return `<img src="${src}" alt="" loading="lazy" class="inline-block shrink-0 rounded-full" style="width:${px}px;height:${px}px" onerror="this.style.visibility='hidden'">`;
 }
 
 function renderPen(){
@@ -439,8 +493,8 @@ function renderPen(){
   box.innerHTML = ord.filter(k=>ab[k]).map(k=>{ const {total,captados,de,ate} = ab[k];
     const janela = k==='Aluno antigo' ? `até ${d(ate)}` : `${d(de)} a ${d(ate)}`;
     return `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-5">
-      <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">${k.replace('Aluno ','Alunos ').toUpperCase()}</div>
-      <div class="text-[10px] text-zinc-500 mt-0.5">Compras ${janela}</div>
+      <div class="flex items-center gap-2.5">${badge(k,34)}<div><div class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">${k.replace('Aluno ','Alunos ').toUpperCase()}</div>
+      <div class="text-[10px] text-zinc-500 mt-0.5">Compras ${janela}</div></div></div>
       <div class="text-[30px] font-bold text-emerald-600 mt-3 tabnum">${pct(captados,total)}</div>
       <div class="h-2 rounded-full bg-white border border-emerald-100 overflow-hidden mt-2"><i class="block h-full" style="width:${pctN(captados,total)}%;background:${cor[k]}"></i></div>
       <div class="grid grid-cols-2 gap-2 mt-3">
@@ -490,14 +544,14 @@ function renderComp(){
 
   const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td = 'text-right py-2.5 px-3 border-b';
   const head = first => `<tr><th class="${th} !text-left">${first}</th><th class="${th}">Leads</th><th class="${th}">Base nova</th><th class="${th}">Sobrepostos</th><th class="${th}">Compr. FDS</th><th class="${th}">Sobrep. FDS</th><th class="${th}">3+ webinars</th></tr>`;
-  const line = (k,x,attr,on) => { const l=sum(x,'l'); return `<tr ${attr} class="${attr?'cursor-pointer ':''}${on?'bg-indigo-50':'hover:bg-zinc-50'}"><td class="${td} !text-left font-semibold text-zinc-900">${k}</td><td class="${td} font-semibold">${fmt(l)}</td><td class="${td} text-blue-600 font-semibold">${pct(l-sum(x,'s'),l)}</td><td class="${td} text-indigo-600 font-semibold">${pct(sum(x,'s'),l)}</td><td class="${td} text-emerald-600 font-semibold">${fmt(sum(x,'b'))} <span class="text-zinc-400 font-normal">${pct(sum(x,'b'),l)}</span></td><td class="${td} text-amber-600 font-semibold">${fmt(sum(x,'sb'))}</td><td class="${td} text-zinc-600">${pct(sum(x,'p3'),l)}</td></tr>`; };
+  const line = (k,x,attr,on) => { const l=sum(x,'l'); return `<tr ${attr} class="${attr?'cursor-pointer ':''}${on?'bg-indigo-50':'hover:bg-zinc-50'}"><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${attr?logo(k):(CLUSTER_IMAGENS[k]?badge(k):'')}${k}</span></td><td class="${td} font-semibold">${fmt(l)}</td><td class="${td} text-blue-600 font-semibold">${pct(l-sum(x,'s'),l)}</td><td class="${td} text-indigo-600 font-semibold">${pct(sum(x,'s'),l)}</td><td class="${td} text-emerald-600 font-semibold">${fmt(sum(x,'b'))} <span class="text-zinc-400 font-normal">${pct(sum(x,'b'),l)}</span></td><td class="${td} text-amber-600 font-semibold">${fmt(sum(x,'sb'))}</td><td class="${td} text-zinc-600">${pct(sum(x,'p3'),l)}</td></tr>`; };
   const rc = filtered(true);
   $('tComp').innerHTML = head('Canal') + canais.map(c=>{const x=rc.filter(r=>r[C.canal]===c); return sum(x,'l') ? line(c,x,`tabindex="0" data-c="${c}"`,state.canal===c) : '';}).join('');
   $('tCompSeg').innerHTML = head('Perfil') + SEGS.map(sg=>{const x=rs.filter(r=>r[C.seg]===sg); return sum(x,'l') ? line(sg,x,'',false) : '';}).join('');
   bindCanal('tComp');
 }
 function bindCanal(id){
-  $(id).querySelectorAll('tr[data-c]').forEach(tr=>{
+  $(id).querySelectorAll('[data-c]').forEach(tr=>{
     const go=()=>{ $('fCanal').value = state.canal===tr.dataset.c ? '' : tr.dataset.c; apply(); };
     tr.onclick=go; tr.onkeydown=e=>{ if(e.key==='Enter') go(); };
   });
