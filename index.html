@@ -352,7 +352,7 @@ function renderCap(){
   $('pillGrp').textContent = `${fmt(DATA.grupos_total)} membros nos grupos`;
   const semScore = sum(rs.filter(r=>r[C.faixa]==='Sem score'),'l'), resp = L - semScore;
   $('kFx').innerHTML = `<div class="flex items-end justify-between border-b border-amber-200/70 pb-2 mb-1"><div><div class="text-[8.5px] font-bold uppercase tracking-wider text-amber-700">Pesquisas respondidas</div><div class="text-[9.5px] text-amber-600/80 mt-0.5">${fmt(resp)} de ${fmt(L)} leads</div></div><div class="text-[22px] font-bold text-amber-600 tabnum leading-none">${pct(resp,L)}</div></div>` + FXS.filter(f=>f!=='Sem score').map(f=>{const n=sum(rs.filter(r=>r[C.faixa]===f),'l');
-    return `<div class="flex items-baseline justify-between mt-1.5"><span class="text-[8.5px] font-semibold uppercase tracking-tight text-amber-700">${f==='Sem score'?'Sem score':'Faixa '+f} (${fmt(n)})</span><span class="text-[13px] font-bold text-amber-600 tabnum">${pct(n,L,2)}</span></div>`}).join('');
+    return `<div class="flex items-baseline justify-between mt-1.5"><span class="text-[8.5px] font-semibold uppercase tracking-tight text-amber-700">${f==='Sem score'?'Sem score':'Faixa '+f} (${fmt(n)})</span><span class="text-[13px] font-bold text-amber-600 tabnum">${pct(n,resp,1)}</span></div>`}).join('') + `<div class="text-[9px] text-amber-600/80 mt-2">Faixas em % de quem respondeu</div>`;
 
   // ---- timeline
   const byDay = dias.map(d=>rs.filter(r=>r[C.dia]===d));
@@ -386,7 +386,7 @@ function renderCap(){
   $('dGr').textContent = pct(dG[last], dL[last], 0);
   $('dNa').textContent = pct(sum(byDay[last].filter(r=>r[C.seg]==='Não aluno'),'l'), dL[last], 0);
   $('dCum').textContent = fmt(cum[last]); $('dCumG').textContent = fmt(cumG[last]);
-  $('dAB').textContent = pct(sum(rs.filter(r=>r[C.faixa]==='A'||r[C.faixa]==='B'),'l'), L);
+  $('dAB').textContent = pct(sum(rs.filter(r=>r[C.faixa]==='A'||r[C.faixa]==='B'),'l'), L - sum(rs.filter(r=>r[C.faixa]==='Sem score'),'l'));
   $('mReal').textContent = fmt(L);
   if(meta){ $('mMeta').textContent = fmt(meta);
     const g = (L-meta)/meta*100; $('mGapP').textContent = (g>0?'+':'')+g.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
@@ -400,7 +400,7 @@ function renderCap(){
   const vals = canais.map(c=>{const x=rc.filter(r=>r[C.canal]===c);return {c,x,l:sum(x,'l')};}).filter(v=>v.l);
   const maxL = Math.max(...vals.map(v=>v.l),1);
   const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b';
-  let t = `<tr><th class="${th} !text-left">Canal</th><th class="${th}">Leads</th><th class="${th}">% do total</th><th class="${th}">No grupo</th><th class="${th}">Não alunos</th><th class="${th}">Score A+B</th><th class="${th}">Sem score</th></tr>`;
+  let t = `<tr><th class="${th} !text-left">Canal</th><th class="${th}">Leads</th><th class="${th}">% do total</th><th class="${th}">No grupo</th><th class="${th}">Não alunos</th><th class="${th}">A+B (resp.)</th><th class="${th}">Não respondeu</th></tr>`;
   vals.forEach(({c,x,l})=>{
     const on = state.canal===c;
     const ab = sum(x.filter(r=>r[C.faixa]==='A'||r[C.faixa]==='B'),'l'), ss = sum(x.filter(r=>r[C.faixa]==='Sem score'),'l');
@@ -409,7 +409,7 @@ function renderCap(){
       <td class="${td}"><div class="flex items-center justify-end gap-2.5"><span class="font-semibold">${fmt(l)}</span><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-indigo-500" style="width:${l/maxL*100}%"></i></span></div></td>
       <td class="${td} text-zinc-600">${pct(l,Lt)}</td><td class="${td} text-emerald-600 font-semibold">${pct(sum(x,'g'),l)}</td>
       <td class="${td} text-indigo-600 font-semibold">${pct(sum(x.filter(r=>r[C.seg]==='Não aluno'),'l'),l)}</td>
-      <td class="${td} text-amber-600 font-semibold">${pct(ab,l)}</td><td class="${td} text-zinc-500">${pct(ss,l)}</td></tr>`;
+      <td class="${td} text-amber-600 font-semibold">${pct(ab,l-ss)}</td><td class="${td} text-zinc-500">${pct(ss,l)}</td></tr>`;
   });
   $('tCanal').innerHTML = t;
   bindCanal('tCanal');
