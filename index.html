@@ -162,12 +162,6 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      </div>
     </section>
 
-    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
-     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>utm_source</span>
-     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Performance por Canal</h2>
-     <p class="text-[13px] text-muted-foreground mt-1">Clique em um canal para filtrar o painel inteiro.</p>
-     <div class="overflow-x-auto mt-5"><table id="tCanal" class="w-full text-[12.5px] tabnum"></table></div>
-    </section>
 
     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
      <div class="flex flex-wrap items-start justify-between gap-4">
@@ -183,11 +177,18 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      <p class="text-[11px] text-muted-foreground mt-4">Calculado sobre a aba Base AQUISIÇÃO (colunas lead e lead tel). Não muda com os filtros de canal, perfil e score.</p>
     </section>
 
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>utm_source</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Performance por Canal</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Clique em um canal para filtrar o painel inteiro.</p>
+     <div class="overflow-x-auto mt-5"><table id="tCanal" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
      <section class="rounded-xl border bg-white px-7 py-7">
       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Leads do webinar</span>
       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Perfil dos Leads</h2>
-      <p class="text-[13px] text-muted-foreground mt-1">Peso de cada cluster dentro dos leads captados.</p>
+      <p class="text-[13px] text-muted-foreground mt-1">Quantos leads de cada cluster e quanto isso representa da base de alunos.</p>
       <div id="bSeg" class="flex flex-col gap-3 mt-5"></div>
      </section>
      <section class="rounded-xl border bg-white px-7 py-7">
@@ -349,7 +350,8 @@ function renderCap(){
   $('kGrN').textContent = fmt(gr)+' leads'; $('kGrF').textContent = fmt(L-gr)+' leads';
   $('kGrTot').textContent = `${fmt(DATA.grupos_total)} membros no total da SendFlow`;
   $('pillGrp').textContent = `${fmt(DATA.grupos_total)} membros nos grupos`;
-  $('kFx').innerHTML = FXS.map(f=>{const n=sum(rs.filter(r=>r[C.faixa]===f),'l');
+  const semScore = sum(rs.filter(r=>r[C.faixa]==='Sem score'),'l'), resp = L - semScore;
+  $('kFx').innerHTML = `<div class="flex items-end justify-between border-b border-amber-200/70 pb-2 mb-1"><div><div class="text-[8.5px] font-bold uppercase tracking-wider text-amber-700">Pesquisas respondidas</div><div class="text-[9.5px] text-amber-600/80 mt-0.5">${fmt(resp)} de ${fmt(L)} leads</div></div><div class="text-[22px] font-bold text-amber-600 tabnum leading-none">${pct(resp,L)}</div></div>` + FXS.filter(f=>f!=='Sem score').map(f=>{const n=sum(rs.filter(r=>r[C.faixa]===f),'l');
     return `<div class="flex items-baseline justify-between mt-1.5"><span class="text-[8.5px] font-semibold uppercase tracking-tight text-amber-700">${f==='Sem score'?'Sem score':'Faixa '+f} (${fmt(n)})</span><span class="text-[13px] font-bold text-amber-600 tabnum">${pct(n,L,2)}</span></div>`}).join('');
 
   // ---- timeline
@@ -416,7 +418,12 @@ function renderCap(){
   const col = {'Não aluno':'#6366f1','Aluno 7d':'#10b981','Aluno 14d':'#34d399','Aluno 30d':'#fb8c45','Aluno antigo':'#a1a1aa'};
   const sv = SEGS.map(sg=>[sg,sum(rs.filter(r=>r[C.seg]===sg),'l')]), sm = Math.max(...sv.map(v=>v[1]),1);
   const hb = (lbl,v,m,c,extra) => `<div class="grid grid-cols-[96px_1fr_92px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${lbl}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/m*100}%;background:${c}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${extra}</span></span></div>`;
-  $('bSeg').innerHTML = sv.map(([k,v])=>hb(k,v,sm,col[k],pct(v,L,0))).join('');
+  const ab = DATA.alunos_base || {};
+  const head = `<div class="grid grid-cols-[96px_1fr_92px_96px] gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1 border-b"><span>Cluster</span><span></span><span class="text-right">Leads</span><span class="text-right">% da base</span></div>`;
+  $('bSeg').innerHTML = head + sv.map(([k,v])=>{
+    const b = ab[k], base = b ? `<b class="text-emerald-600">${pct(b.captados,b.total,1)}</b><div class="text-[10px] text-zinc-400">${fmt(b.captados)} de ${fmt(b.total)}</div>` : `<span class="text-zinc-300">–</span>`;
+    return `<div class="grid grid-cols-[96px_1fr_92px_96px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${k}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/sm*100}%;background:${col[k]}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${pct(v,L,0)}</span></span><span class="text-right tabnum leading-tight">${k==='Não aluno'?'<span class="text-zinc-300">–</span>':base}</span></div>`;
+  }).join('') + (DATA.alunos_base ? `<p class="text-[10.5px] text-muted-foreground mt-1">% da base = alunos do cluster na aba Base AQUISIÇÃO que já se inscreveram.</p>` : `<p class="text-[10.5px] text-amber-600 mt-1">Para ver o % da base, adicione o nó "Base Aquisição" no n8n.</p>`);
   renderPen();
   const gv = Object.entries(DATA.grupos), gm = Math.max(...gv.map(g=>g[1]));
   $('bGrp').innerHTML = gv.map(([k,v])=>hb(k,v,gm,'#10b981',pct(v,DATA.grupos_total,0))).join('');
