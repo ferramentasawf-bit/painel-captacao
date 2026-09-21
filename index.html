@@ -80,7 +80,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
        <span class="text-zinc-300">|</span>
        <select id="fFaixa" aria-label="Score" class="bg-transparent px-1.5 py-1"></select>
        <span class="text-zinc-300">|</span>
-       <input id="meta" type="number" min="0" step="100" placeholder="Meta de leads" aria-label="Meta de leads" class="w-[110px] bg-transparent px-1.5 py-1">
+       <input id="meta" type="number" min="0" step="100" placeholder="Meta (padrão: aba Meta)" aria-label="Meta de leads" class="w-[170px] bg-transparent px-1.5 py-1">
       </div>
       <button id="apply" class="text-[12px] font-semibold text-white px-4 py-2 rounded-lg bg-indigo-300 transition-colors">Aplicar</button>
      </div>
@@ -274,11 +274,73 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
     </div>
 
     <div id="v-meta" hidden>
-     <section class="rounded-xl border border-dashed bg-white px-7 py-12 mt-9 text-center">
-      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-target"/></svg>Em construção</span>
-      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Meta a partir das campanhas anteriores</h2>
-      <p class="text-[13px] text-muted-foreground mt-2 max-w-[520px] mx-auto">Esta aba vai ler a planilha de premissas e comparar o resultado projetado para o volume de leads com o que está acontecendo nesta campanha.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
+     <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-target"/></svg>Meta de leads</div>
+      <div id="mtLeads" class="text-[32px] font-bold text-blue-600 mt-2 tabnum"></div>
+      <div class="h-1.5 rounded-full bg-white border border-blue-100 overflow-hidden mt-2"><i id="mtLeadsBar" class="block h-full bg-blue-500"></i></div>
+      <div id="mtLeadsSub" class="text-[9.5px] text-blue-500 mt-1.5"></div>
+     </div>
+     <div class="rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Faturamento projetado</div>
+      <div id="mtFat" class="text-[26px] font-bold text-indigo-600 mt-2 tabnum"></div>
+      <div id="mtFatSub" class="text-[9.5px] text-indigo-400 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Resultado real projetado</div>
+      <div id="mtReal" class="text-[26px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="mtRealSub" class="text-[9.5px] text-emerald-600 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Funil comercial</div>
+      <div id="mtFunFat" class="text-[26px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="mtFunSub" class="text-[9.5px] text-amber-600/80 mt-1"></div>
+     </div>
+    </div>
+
+    <section class="rounded-xl border bg-white px-7 py-7 mt-10">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Premissas de captação</span>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Meta por Cluster</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Quanto de cada base a premissa pede para captar, e quanto já entrou nesta campanha.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Ritmo necessário</div>
+       <div class="mt-1"><span id="mtRitmo" class="text-[21px] font-bold text-zinc-900 tabnum"></span> <span class="text-[12px] text-muted-foreground">/dia</span></div>
+       <div id="mtRitmoSub" class="text-[10px] text-zinc-500 mt-0.5"></div></div>
+     </div>
+     <div class="overflow-x-auto mt-5"><table id="mtCluster" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-6">
+     <section class="rounded-xl border bg-white px-7 py-7 min-w-0">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Campanhas anteriores</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Projeção por Canal e Cluster</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Matriz montada com o histórico de leads, compradores e ticket das campanhas anteriores.</p>
+      <div id="mtTabs" class="flex flex-wrap gap-1.5 mt-5"></div>
+      <div class="overflow-x-auto mt-4"><table id="mtMatriz" class="w-full text-[12px] tabnum"></table></div>
      </section>
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Resultado</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Projeção de Resultado</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Faturamento projetado menos custos e impostos.</p>
+      <div id="mtDre" class="mt-5 flex flex-col"></div>
+     </section>
+    </div>
+
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Link de aplicação</span>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Funil Comercial</h2>
+       <p id="mtFunDesc" class="text-[13px] text-muted-foreground mt-1"></p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Margem projetada</div>
+       <div class="mt-1"><span id="mtMargem" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div></div>
+     </div>
+     <div id="mtFunil" class="flex flex-col gap-2.5 mt-6"></div>
+     <div id="mtFunFin" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6"></div>
+    </section>
     </div>
 
     <p id="note" class="text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed"></p>
@@ -307,6 +369,10 @@ const CANAL_IMAGENS = {
   'area-de-membros': 'cademi.png',
   'sem utm': 'sem-utm.png',
 };
+// Canais que devem aparecer juntos no painel: 'utm_source da planilha': 'nome que aparece'
+const CANAL_JUNTAR = {
+  'whatsapp': 'sendflow',
+};
 // Selo de cada cluster de aluno (arquivo enviado ao repositório)
 const CLUSTER_IMAGENS = {
   'Aluno 7d': 'aluno-7d.png',
@@ -314,6 +380,74 @@ const CLUSTER_IMAGENS = {
   'Aluno 30d': 'aluno-30d.png',
   'Aluno antigo': 'aluno-antigo.png',
   'Não aluno': 'nao-aluno.png',
+};
+// ===== META DA CAMPANHA (atualize a cada lançamento, copiando da planilha de metas) =====
+const META = {
+  campanha: 'W09',
+  data_evento: '2026-10-06',
+  inicio_captacao: '',          // opcional, ex.: '2026-09-29'. Vazio = primeiro dia com inscrições
+  // Premissas por cluster: base = QUANTIDADE, taxa = Média, leads = SEGUINDO PREMISSAS
+  premissas: {
+    'Aluno 7d':     { base: 1330,  taxa: 0.70, leads: 931 },
+    'Aluno 14d':    { base: 1330,  taxa: 0.70, leads: 931 },
+    'Aluno 30d':    { base: 3323,  taxa: 0.30, leads: 997 },
+    'Aluno antigo': { base: 34942, taxa: 0.07, leads: 2446 },
+    'Não aluno':    { base: 25000, taxa: 0.15, leads: 3750 },
+  },
+  // Matriz "Projeção - Geral": nome do canal na planilha de metas -> utm_source no painel
+  canais: { 'yay-form':'yay-form', 'email':'activecampaign', 'whatsapp':'sendflow', 'awsales':'awsales', 'area-de-membros':'area-de-membros', 'instagram':'instagram', 'youtube':'youtube' },
+  // Cada linha segue a ordem dos canais acima; o último número é a coluna "Somado Canais"
+  matriz: {
+    leads: {
+      'Aluno 7d':     [313, 23, 94, 136, 361, 3, 1, 931],
+      'Aluno 14d':    [277, 39, 209, 122, 283, 0, 1, 931],
+      'Aluno 30d':    [113, 66, 327, 229, 258, 2, 2, 997],
+      'Aluno antigo': [92, 192, 714, 1090, 336, 8, 14, 2446],
+      'Não aluno':    [109, 299, 1515, 1043, 270, 386, 129, 3750],
+      'Total':        [904, 620, 2858, 2620, 1506, 400, 146, 9055],
+    },
+    compradores: {
+      'Aluno 7d':     [17, 2, 9, 6, 22, 0, 0, 57],
+      'Aluno 14d':    [16, 3, 20, 5, 17, 0, 0, 61],
+      'Aluno 30d':    [6, 5, 22, 8, 14, 0, 0, 56],
+      'Aluno antigo': [2, 5, 27, 20, 9, 0, 1, 64],
+      'Não aluno':    [2, 4, 25, 15, 4, 2, 1, 54],
+      'Total':        [43, 20, 103, 54, 66, 2, 2, 291],
+    },
+    faturamento: {
+      'Aluno 7d':     [30330.24, 3038.17, 13436.52, 12627.55, 24768.92, 0, 0, 85389.75],
+      'Aluno 14d':    [14919.84, 7254.38, 28216.12, 7419.53, 31530.61, 0, 477.96, 90415.16],
+      'Aluno 30d':    [8967.80, 11230.71, 24654.18, 19293.70, 16902.26, 0.43, 0, 73408.63],
+      'Aluno antigo': [7061.26, 14096.94, 44800.49, 31624.60, 8446.63, 0, 0, 114777.39],
+      'Não aluno':    [4742.40, 834.31, 37377.31, 16916.21, 4190.86, 2393.47, 873.05, 60635.87],
+      'Total':        [66021.54, 36454.51, 148484.61, 87881.59, 85839.28, 2393.93, 1151.01, 424626.80],
+    },
+    tmf: {
+      'Aluno 7d':     [1793.43, 1522.80, 1437.58, 2057.69, 1112.57, 0, 0, 1507.18],
+      'Aluno 14d':    [944.25, 2154.02, 1432.51, 1581.52, 1843.45, 0, 2388.26, 1485.60],
+      'Aluno 30d':    [1485.53, 2160.21, 1103.14, 2295.87, 1248.58, 199.02, 0, 1322.02],
+      'Aluno antigo': [2964.02, 2569.02, 1689.06, 1614.52, 928.77, 0, 0, 1800.51],
+      'Não aluno':    [2042.35, 199.02, 1484.68, 1120.69, 1024.73, 1089.42, 659.85, 1121.00],
+      'Total':        [1465.73, 1907.67, 1378.51, 1821.25, 1375.41, 866.82, 906.77, 1454.90],
+    },
+  },
+  // Resultado
+  faturamento_strack: 59520.94,   // Faturamento S/track
+  taxas_pct: 0.12,                // Taxas (sobre o faturamento)
+  disparos: 30000,                // Disparos + Aw Sales
+  sms_ligacao: 2500,              // SMS Flash + Ligação
+  imposto_pct: 0.11,              // Imposto (sobre o faturamento)
+  // Funil comercial (cenário ideal)
+  funil: {
+    showup_pct: 0.50,             // show-up sobre leads
+    aplic_dia1_pct: 0.22,         // aplicações no 1º dia sobre show-up
+    aplic_pct: 0.61,              // aplicações totais sobre show-up
+    vendas_lead_pct: 0.05,        // vendas sobre leads
+    cartao_pct: 0.55,             // parte das vendas no cartão (o resto é boleto)
+    ticket_cartao: 2707.94,
+    ticket_boleto: 249.71,
+    margem_pct: 0.60,
+  },
 };
 // =========================
 const EMBED = null;
@@ -329,7 +463,8 @@ const ddmm = d => `${d.slice(8)}/${d.slice(5,7)}`;
 const dm = d => `${+d.slice(8)}/${+d.slice(5,7)}`;
 const opts = (sel, vals, all) => { const cur = sel.value; sel.innerHTML = `<option value="">${all}</option>` + vals.map(v=>`<option>${v}</option>`).join(''); sel.value = cur; };
 function load(data){
-  DATA = data; rows = DATA.rows; C = DATA.cols.reduce((o,c,i)=>(o[c]=i,o),{});
+  DATA = data; C = DATA.cols.reduce((o,c,i)=>(o[c]=i,o),{});
+  rows = DATA.rows.map(r=>{ const j = CANAL_JUNTAR[r[C.canal]]; if(!j) return r; const x = r.slice(); x[C.canal] = j; return x; });
   $('camp').textContent = DATA.campanha;
   canais = [...new Set(rows.map(r=>r[C.canal]))];
   canais.sort((a,b)=>sum(rows.filter(r=>r[C.canal]===b),'l')-sum(rows.filter(r=>r[C.canal]===a),'l'));
@@ -338,7 +473,7 @@ function load(data){
 const VIEWS = {
   captacao:{t:'Análise de Captação', s:'Visão consolidada de leads, alunos, score da pesquisa e grupos da SendFlow (planilha de debriefing).'},
   composicao:{t:'Composição da Base', s:'Quanto da captação é público novo, quanto veio de outras captações e quantos já compraram o FDS.'},
-  meta:{t:'Meta da Campanha', s:'Resultado projetado a partir das campanhas anteriores e do volume de leads.'}
+  meta:{t:'Meta da Campanha', s:'Projeção pelas campanhas anteriores e pelo funil comercial, com o realizado desta captação.'}
 };
 let view = 'captacao';
 function route(){
@@ -371,7 +506,7 @@ function filtered(skipCanal){
     && (!faixa || r[C.faixa]===faixa));
 }
 
-function render(){ if(!rows) return; if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); }
+function render(){ if(!rows) return; if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); }
 function renderCap(){
   const rs = filtered(false), L = sum(rs,'l');
   const na = sum(rs.filter(r=>r[C.seg]==='Não aluno'),'l'), al = L-na, gr = sum(rs,'g');
@@ -396,7 +531,7 @@ function renderCap(){
   const byDay = dias.map(d=>rs.filter(r=>r[C.dia]===d));
   const dL = byDay.map(x=>sum(x,'l')), dG = byDay.map(x=>sum(x,'g'));
   const cum=[], cumG=[]; dL.reduce((a,v,i)=>(cum[i]=a+v),0); dG.reduce((a,v,i)=>(cumG[i]=a+v),0);
-  const meta = state.meta, metaCum = dias.map((_,i)=>Math.round(meta*(i+1)/dias.length));
+  const meta = state.meta || META.matriz.leads.Total.at(-1), metaCum = dias.map((_,i)=>Math.round(meta*(i+1)/dias.length));
   const n = dias.length, W = 1000, H = 262, base = 230, top = meta ? 62 : 50, gap = 3;
   const bw = (W - gap*(n-1))/n;
   const max = Math.max(...cum, meta||0) || 1, y = v => base - (v/max)*(base-top);
@@ -507,6 +642,110 @@ function renderPen(){
   const rec = ['Aluno 7d','Aluno 14d','Aluno 30d'].filter(k=>ab[k]);
   const tc = rec.reduce((s,k)=>s+ab[k].captados,0), tt = rec.reduce((s,k)=>s+ab[k].total,0);
   $('penRecent').textContent = `${pct(tc,tt)} (${fmt(tc)} de ${fmt(tt)})`;
+}
+
+const brl = (v,d=0) => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let mtAba = 'leads';
+function renderMeta(){
+  const M = META, metaLeads = M.matriz.leads.Total.at(-1);
+  const L = sum(rows,'l');
+  const bySeg = k => sum(rows.filter(r=>r[C.seg]===k),'l');
+  // cards
+  $('mtLeads').textContent = fmt(metaLeads);
+  $('mtLeadsBar').style.width = Math.min(100,pctN(L,metaLeads))+'%';
+  $('mtLeadsSub').textContent = `${fmt(L)} captados (${pct(L,metaLeads)}) · evento ${M.data_evento.slice(8)}/${M.data_evento.slice(5,7)}`;
+  const fat = M.matriz.faturamento.Total.at(-1), fatTot = fat + M.faturamento_strack;
+  const taxas = fat*M.taxas_pct, margem = fatTot - taxas - M.disparos - M.sms_ligacao, imposto = fat*M.imposto_pct, real = margem - imposto;
+  $('mtFat').textContent = brl(fatTot);
+  $('mtFatSub').textContent = `${brl(fat)} rastreado + ${brl(M.faturamento_strack)} sem track · ${fmt(M.matriz.compradores.Total.at(-1))} compradores`;
+  $('mtReal').textContent = brl(real);
+  $('mtRealSub').textContent = `${pct(real,fatTot)} do faturamento total, após custos e impostos`;
+  const F = M.funil, showup = Math.floor(metaLeads*F.showup_pct), ap1 = Math.round(showup*F.aplic_dia1_pct), ap = Math.round(showup*F.aplic_pct);
+  const vendas = Math.round(metaLeads*F.vendas_lead_pct), vc = Math.round(vendas*F.cartao_pct), vb = vendas - vc;
+  const fc = vc*F.ticket_cartao, fb = vb*F.ticket_boleto, fg = fc+fb, mg = fg*F.margem_pct;
+  $('mtFunFat').textContent = brl(fg);
+  $('mtFunSub').textContent = `${fmt(vendas)} vendas · margem de ${brl(mg)}`;
+
+  // ritmo
+  const dias = [...new Set(rows.map(r=>r[C.dia]))].sort();
+  const hoje = new Date(); const hojeISO = new Date(hoje.getTime()-hoje.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const restam = Math.max(0, Math.round((new Date(M.data_evento) - new Date(hojeISO))/86400000));
+  const faltaL = Math.max(0, metaLeads - L);
+  $('mtRitmo').textContent = restam ? fmt(Math.ceil(faltaL/restam)) : '–';
+  $('mtRitmoSub').textContent = restam ? `faltam ${fmt(faltaL)} leads em ${restam} dia${restam>1?'s':''}` : 'data do evento já passou';
+
+  // cluster table
+  const ab = DATA.alunos_base || {};
+  const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td = 'text-right py-2.5 px-3 border-b';
+  let tb = `<tr><th class="${th} !text-left">Cluster</th><th class="${th}">Base</th><th class="${th}">Taxa premissa</th><th class="${th}">Meta de leads</th><th class="${th}">Realizado</th><th class="${th} w-[180px]">% da meta</th><th class="${th}">Taxa atual</th><th class="${th}">Faltam</th></tr>`;
+  let tm=0, tr=0;
+  for(const k of SEGS){ const p = M.premissas[k]; if(!p) continue;
+    const real = bySeg(k); tm += p.leads; tr += real;
+    const taxaAtual = k==='Não aluno' ? real/p.base : (ab[k] ? ab[k].captados/ab[k].total : real/p.base);
+    const pc = pctN(real,p.leads);
+    tb += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${badge(k)}${k}</span></td>
+      <td class="${td} text-zinc-600">${fmt(p.base)}</td><td class="${td} text-zinc-600">${pct(p.taxa,1,0)}</td>
+      <td class="${td} font-bold text-amber-500">${fmt(p.leads)}</td><td class="${td} font-bold text-emerald-600">${fmt(real)}</td>
+      <td class="${td}"><div class="flex items-center justify-end gap-2"><span class="w-[90px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full ${pc>=100?'bg-emerald-500':'bg-indigo-500'}" style="width:${Math.min(100,pc)}%"></i></span><b class="w-[44px]">${pct(real,p.leads,0)}</b></div></td>
+      <td class="${td} ${taxaAtual>=p.taxa?'text-emerald-600':'text-zinc-600'} font-semibold">${(taxaAtual*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%</td>
+      <td class="${td} ${p.leads-real>0?'text-red-500':'text-emerald-600'} font-semibold">${p.leads-real>0?fmt(p.leads-real):'batida'}</td></tr>`;
+  }
+  tb += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td}"></td><td class="${td}"></td><td class="${td} font-bold text-amber-500">${fmt(tm)}</td><td class="${td} font-bold text-emerald-600">${fmt(tr)}</td><td class="${td} font-bold">${pct(tr,tm,0)}</td><td class="${td}"></td><td class="${td} font-bold ${tm-tr>0?'text-red-500':'text-emerald-600'}">${tm-tr>0?fmt(tm-tr):'batida'}</td></tr>`;
+  $('mtCluster').innerHTML = tb;
+
+  // matriz
+  const abas = [['leads','Leads'],['realizado','Realizado x meta'],['compradores','Compradores'],['conversao','Conversão'],['faturamento','Faturamento'],['tmf','Ticket médio']];
+  $('mtTabs').innerHTML = abas.map(([k,l])=>`<button data-a="${k}" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border ${mtAba===k?'bg-zinc-900 text-white border-zinc-900':'bg-white text-zinc-600 hover:bg-zinc-50'}">${l}</button>`).join('');
+  $('mtTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ mtAba=b.dataset.a; renderMeta(); });
+  const cn = Object.keys(M.canais), linhas = [...SEGS.filter(k=>M.matriz.leads[k]), 'Total'];
+  const fmtv = v => mtAba==='faturamento'||mtAba==='tmf' ? (v ? v.toLocaleString('pt-BR',{maximumFractionDigits:0}) : '–') : mtAba==='conversao' ? (v===null?'–':(v*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%') : fmt(v);
+  let mh = `<tr><th class="${th} !text-left">${mtAba==='faturamento'||mtAba==='tmf'?'R$':''}</th>${cn.map(c=>`<th class="${th}"><span class="inline-flex items-center gap-1.5 justify-end">${logo(M.canais[c])}${c}</span></th>`).join('')}<th class="${th} !text-zinc-900">Total</th></tr>`;
+  for(const k of linhas){
+    let vals;
+    if(mtAba==='realizado'){
+      vals = cn.map(c=>{ const x = rows.filter(r=>r[C.canal]===M.canais[c] && (k==='Total'||r[C.seg]===k)); return sum(x,'l'); });
+      vals.push(k==='Total' ? L : bySeg(k));
+      const metaRow = M.matriz.leads[k];
+      mh += `<tr class="${k==='Total'?'bg-zinc-50 font-bold':''}"><td class="${td} !text-left font-semibold text-zinc-900 whitespace-nowrap">${k}</td>${vals.map((v,i)=>{ const m=metaRow[i]; const p=m?v/m:null; return `<td class="${td}"><b class="text-zinc-900">${fmt(v)}</b><span class="text-zinc-400"> / ${fmt(m)}</span><div class="text-[10px] ${p===null?'text-zinc-300':p>=1?'text-emerald-600':'text-zinc-500'}">${p===null?'–':(p*100).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%'}</div></td>`; }).join('')}</tr>`;
+      continue;
+    }
+    vals = mtAba==='conversao' ? M.matriz.leads[k].map((l,i)=> l ? M.matriz.compradores[k][i]/l : null) : M.matriz[mtAba][k];
+    mh += `<tr class="${k==='Total'?'bg-zinc-50 font-bold':''}"><td class="${td} !text-left font-semibold text-zinc-900 whitespace-nowrap">${k==='Total'?'Total':k}</td>${vals.map((v,i)=>`<td class="${td} ${i===vals.length-1?'font-bold text-zinc-900':'text-zinc-700'}">${fmtv(v)}</td>`).join('')}</tr>`;
+  }
+  $('mtMatriz').innerHTML = mh;
+
+  // DRE
+  const linha = (l,v,cls,sub) => `<div class="flex items-center justify-between py-2.5 border-b last:border-0 ${sub?'':''}"><span class="text-[12px] ${cls.includes('font-bold')?'font-bold text-zinc-900':'text-zinc-600'}">${l}</span><span class="text-[13px] tabnum ${cls}">${v}</span></div>`;
+  $('mtDre').innerHTML = [
+    linha('Faturamento', brl(fat,2), 'font-semibold text-zinc-900'),
+    linha('Faturamento sem track', brl(M.faturamento_strack,2), 'font-semibold text-zinc-900'),
+    linha('Faturamento total', brl(fatTot,2), 'font-bold text-amber-600'),
+    linha(`Taxas (${pct(M.taxas_pct,1,0)})`, '− '+brl(taxas,2), 'text-red-500 font-semibold'),
+    linha('Disparos + Aw Sales', '− '+brl(M.disparos,2), 'text-red-500 font-semibold'),
+    linha('SMS Flash + Ligação', '− '+brl(M.sms_ligacao,2), 'text-red-500 font-semibold'),
+    linha('Resultado em margem', brl(margem,2), 'font-bold text-emerald-600'),
+    linha(`Imposto (${pct(M.imposto_pct,1,0)})`, '− '+brl(imposto,2), 'text-red-500 font-semibold'),
+    `<div class="flex items-center justify-between mt-3 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3"><span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Resultado real</span><span class="text-[20px] font-bold text-emerald-600 tabnum">${brl(real,2)}</span></div>`
+  ].join('');
+
+  // funil
+  $('mtFunDesc').textContent = `Cenário ideal com as premissas do funil comercial, partindo da meta de ${fmt(metaLeads)} leads.`;
+  $('mtMargem').textContent = brl(mg);
+  const etapas = [
+    ['Leads', metaLeads, 'meta', L, '#3b82f6'],
+    ['Show-up', showup, `${pct(F.showup_pct,1,0)} dos leads`, null, '#6366f1'],
+    ['Aplicações no 1º dia', ap1, `${pct(F.aplic_dia1_pct,1,0)} do show-up`, null, '#818cf8'],
+    ['Aplicações totais', ap, `${pct(F.aplic_pct,1,0)} do show-up`, null, '#a78bfa'],
+    ['Vendas', vendas, `${pct(F.vendas_lead_pct,1,0)} dos leads · ${pct(vendas,ap,0)} das aplicações`, null, '#10b981'],
+    ['Vendas no cartão', vc, `${pct(F.cartao_pct,1,0)} das vendas`, null, '#34d399'],
+    ['Vendas no boleto', vb, `${pct(1-F.cartao_pct,1,0)} das vendas`, null, '#fb8c45'],
+  ];
+  $('mtFunil').innerHTML = etapas.map(([n,v,d,r,c])=>`<div class="grid grid-cols-[150px_1fr_190px] items-center gap-4 text-[12px]">
+    <span class="font-semibold text-zinc-800">${n}</span>
+    <span class="h-7 bg-zinc-50 rounded overflow-hidden relative"><i class="block h-full rounded" style="width:${Math.max(2,v/metaLeads*100)}%;background:${c}"></i>${r!==null?`<i class="absolute inset-y-0 left-0 border-r-2 border-zinc-900" style="width:${Math.min(100,r/metaLeads*100)}%" title="Realizado: ${fmt(r)}"></i>`:''}</span>
+    <span class="text-right tabnum"><b class="text-[14px] text-zinc-900">${fmt(v)}</b><div class="text-[10px] text-zinc-500">${r!==null?`realizado ${fmt(r)} (${pct(r,v,0)})`:d}</div></span></div>`).join('');
+  const box = (l,v,cls) => `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-4"><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${l}</div><div class="text-[20px] font-bold ${cls} mt-1 tabnum">${v}</div></div>`;
+  $('mtFunFin').innerHTML = box('Faturamento cartão', brl(fc), 'text-zinc-900') + box('Faturamento boleto', brl(fb), 'text-zinc-900') + box('Faturamento geral', brl(fg), 'text-amber-500') + box(`Margem (${pct(F.margem_pct,1,0)})`, brl(mg), 'text-emerald-600');
 }
 
 function renderComp(){
