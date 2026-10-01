@@ -425,6 +425,7 @@ const CANAL_IMAGENS = {
   'youtube': 'youtube.png',
   'tiktok': 'tiktok.png',
   'activecampaign': 'activecampaign.png',
+  'email': 'activecampaign.png',
   'meta': 'meta.png',
   'awsales': 'awsales.png',
   'sendflow': 'sendflow.png',
@@ -435,6 +436,7 @@ const CANAL_IMAGENS = {
 // Canais que devem aparecer juntos no painel: 'utm_source da planilha': 'nome que aparece'
 const CANAL_JUNTAR = {
   'whatsapp': 'sendflow',
+  'activecampaign': 'email',
 };
 // Selo de cada cluster de aluno (arquivo enviado ao repositório)
 const CLUSTER_IMAGENS = {
@@ -447,11 +449,11 @@ const CLUSTER_IMAGENS = {
 // ===== DISPAROS (AwSales) — acrescente uma linha por disparo =====
 // 'utm' é o utm_content que identifica o disparo na base de leads.
 const DISPAROS = [
-  // canal: 'awsales'  (opcional — use se o mesmo utm_content for usado em mais de um canal)
-  { utm:'FI-ALU-T1', nome:'DIRETO FDS - Alunos - Copy 1 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:963, custo:173.54, funil:'W01 - OFR', responsavel:'Luizin' },
-  { utm:'FI-ALU-T2', nome:'DIRETO FDS - Alunos - Copy 2 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:955, custo:171.90, funil:'W01 - OFR', responsavel:'Luizin' },
-  { utm:'FI-NAL-T1', nome:'DIRETO FDS - NÃO Alunos - Copy 1 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:965, custo:173.70, funil:'W01 - OFR', responsavel:'Luizin' },
-  { utm:'FI-NAL-T2', nome:'DIRETO FDS - NÃO Alunos - Copy 2 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:970, custo:174.60, funil:'W01 - OFR', responsavel:'Luizin' },
+  // 'utm' = utm_content exato do link. Opcional: canal:'awsales' se o mesmo utm for usado em outro canal.
+  { utm:'F1-ALU-T1', nome:'DIRETO FDS - Alunos - Copy 1 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:963, custo:173.54, funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F1-ALU-T2', nome:'DIRETO FDS - Alunos - Copy 2 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:955, custo:171.90, funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F1-NAL-T1', nome:'DIRETO FDS - NÃO Alunos - Copy 1 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:965, custo:173.70, funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F1-NAL-T2', nome:'DIRETO FDS - NÃO Alunos - Copy 2 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:970, custo:174.60, funil:'W01 - OFR', responsavel:'Luizin' },
 ];
 // ===== META DA CAMPANHA (atualize a cada lançamento, copiando da planilha de metas) =====
 const META = {
@@ -467,7 +469,7 @@ const META = {
     'Não aluno':    { base: 25000, taxa: 0.15, leads: 3750 },
   },
   // Matriz "Projeção - Geral": nome do canal na planilha de metas -> utm_source no painel
-  canais: { 'yay-form':'yay-form', 'email':'activecampaign', 'whatsapp':'sendflow', 'awsales':'awsales', 'area-de-membros':'area-de-membros', 'instagram':'instagram', 'youtube':'youtube' },
+  canais: { 'yay-form':'yay-form', 'email':'email', 'whatsapp':'sendflow', 'awsales':'awsales', 'area-de-membros':'area-de-membros', 'instagram':'instagram', 'youtube':'youtube' },
   // Cada linha segue a ordem dos canais acima; o último número é a coluna "Somado Canais"
   matriz: {
     leads: {
@@ -581,7 +583,8 @@ function filtered(skipCanal){
     && (!faixa || r[C.faixa]===faixa));
 }
 
-function render(){ if(!rows) return; if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); if(view==='disparos') renderDisp(); }
+function render(){
+  if(!rows){ $('note').className='text-[12px] text-zinc-500 mt-8'; $('note').textContent='Carregando os dados da planilha… isso leva alguns segundos.'; return; } if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); if(view==='disparos') renderDisp(); }
 function renderCap(){
   const rs = filtered(false), L = sum(rs,'l');
   const na = sum(rs.filter(r=>r[C.seg]==='Não aluno'),'l'), al = L-na, gr = sum(rs,'g');
