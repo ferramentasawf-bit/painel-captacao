@@ -57,6 +57,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
   <nav class="p-2 pt-3 flex flex-col gap-0.5 text-[13px] text-sidebar-foreground" id="nav">
    <a data-v="captacao" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#captacao"><svg class="ico"><use href="#i-magnet"/></svg>Captação</a>
    <a data-v="composicao" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#composicao"><svg class="ico"><use href="#i-layers"/></svg>Composição da Base</a>
+   <a data-v="disparos" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#disparos"><svg class="ico"><use href="#i-send"/></svg>Disparos</a>
    <a data-v="meta" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#meta"><svg class="ico"><use href="#i-target"/></svg>Meta</a>
   </nav>
  </aside>
@@ -273,6 +274,68 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
     </section>
     </div>
 
+    <div id="v-disparos" hidden>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
+     <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-send"/></svg>Disparos realizados</div>
+      <div id="dpQtd" class="text-[32px] font-bold text-blue-600 mt-2 tabnum"></div>
+      <div id="dpQtdSub" class="text-[9.5px] text-blue-500 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-magnet"/></svg>Leads pelos disparos</div>
+      <div id="dpLeads" class="text-[32px] font-bold text-indigo-600 mt-2 tabnum"></div>
+      <div id="dpLeadsSub" class="text-[9.5px] text-indigo-400 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Taxa de conversão</div>
+      <div id="dpTx" class="text-[32px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="dpTxSub" class="text-[9.5px] text-emerald-600/80 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>CPL médio</div>
+      <div id="dpCpl" class="text-[32px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="dpCplSub" class="text-[9.5px] text-amber-600/80 mt-1"></div>
+     </div>
+    </div>
+
+    <section class="rounded-xl border bg-white px-7 py-7 mt-10">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>utm_content</span>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Performance por Disparo</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Conversão sobre as mensagens entregues e custo por lead de cada disparo.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Melhor CPL</div>
+       <div class="mt-1"><span id="dpMelhor" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div>
+       <div id="dpMelhorSub" class="text-[10px] text-zinc-500 mt-0.5"></div></div>
+     </div>
+     <div class="overflow-x-auto mt-5"><table id="dpTabela" class="w-full text-[12.5px] tabnum"></table></div>
+     <p id="dpNota" class="text-[11px] text-muted-foreground mt-4"></p>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Comparativo</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Conversão por Copy</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Leads captados a cada 100 mensagens entregues.</p>
+      <div id="dpBarras" class="flex flex-col gap-3 mt-5"></div>
+     </section>
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-users"/></svg>Público</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Alunos x Não Alunos</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Resultado somado dos disparos de cada público.</p>
+      <div id="dpPublico" class="grid grid-cols-1 gap-4 mt-5"></div>
+     </section>
+    </div>
+
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Sem cadastro</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Outros utm_content Capturados</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Os 20 maiores conteúdos que apareceram na base e ainda não estão na lista de disparos. Acrescente em DISPAROS para ver custo e CPL.</p>
+     <div class="overflow-x-auto mt-5"><table id="dpOutros" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
+    </div>
+
     <div id="v-meta" hidden>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
      <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
@@ -381,6 +444,15 @@ const CLUSTER_IMAGENS = {
   'Aluno antigo': 'aluno-antigo.png',
   'Não aluno': 'nao-aluno.png',
 };
+// ===== DISPAROS (AwSales) — acrescente uma linha por disparo =====
+// 'utm' é o utm_content que identifica o disparo na base de leads.
+const DISPAROS = [
+  // canal: 'awsales'  (opcional — use se o mesmo utm_content for usado em mais de um canal)
+  { utm:'FI-ALU-T1', nome:'DIRETO FDS - Alunos - Copy 1 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:963, custo:173.54, funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'FI-ALU-T2', nome:'DIRETO FDS - Alunos - Copy 2 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:955, custo:171.90, funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'FI-NAL-T1', nome:'DIRETO FDS - NÃO Alunos - Copy 1 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:965, custo:173.70, funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'FI-NAL-T2', nome:'DIRETO FDS - NÃO Alunos - Copy 2 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:970, custo:174.60, funil:'W01 - OFR', responsavel:'Luizin' },
+];
 // ===== META DA CAMPANHA (atualize a cada lançamento, copiando da planilha de metas) =====
 const META = {
   campanha: 'W09',
@@ -451,7 +523,7 @@ const META = {
 };
 // =========================
 const EMBED = null;
-let DATA, C, rows, canais = [];
+let DATA, C, rows, CD, rowsDisp = [], canais = [];
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('pt-BR');
 const pctN = (a,b) => b ? a/b*100 : 0;
@@ -466,6 +538,8 @@ function load(data){
   DATA = data; C = DATA.cols.reduce((o,c,i)=>(o[c]=i,o),{});
   rows = DATA.rows.map(r=>{ const j = CANAL_JUNTAR[r[C.canal]]; if(!j) return r; const x = r.slice(); x[C.canal] = j; return x; });
   $('camp').textContent = DATA.campanha;
+  CD = (DATA.cols_disp||[]).reduce((o,c,i)=>(o[c]=i,o),{});
+  rowsDisp = (DATA.rows_disp||[]).map(r=>{ const j = CANAL_JUNTAR[r[CD.canal]]; if(!j) return r; const x = r.slice(); x[CD.canal] = j; return x; });
   canais = [...new Set(rows.map(r=>r[C.canal]))];
   canais.sort((a,b)=>sum(rows.filter(r=>r[C.canal]===b),'l')-sum(rows.filter(r=>r[C.canal]===a),'l'));
   opts($('fCanal'), canais, 'Todos os canais');
@@ -473,6 +547,7 @@ function load(data){
 const VIEWS = {
   captacao:{t:'Análise de Captação', s:'Visão consolidada de leads, alunos, score da pesquisa e grupos da SendFlow (planilha de debriefing).'},
   composicao:{t:'Composição da Base', s:'Quanto da captação é público novo, quanto veio de outras captações e quantos já compraram o FDS.'},
+  disparos:{t:'Análise de Disparos', s:'Resultado de cada disparo da AwSales: leads, taxa de conversão e custo por lead.'},
   meta:{t:'Meta da Campanha', s:'Projeção pelas campanhas anteriores e pelo funil comercial, com o realizado desta captação.'}
 };
 let view = 'captacao';
@@ -480,7 +555,7 @@ function route(){
   view = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'captacao';
   for(const v in VIEWS) $('v-'+v).hidden = v!==view;
   $('vTitle').textContent = VIEWS[view].t; $('vSub').textContent = VIEWS[view].s;
-  $('filters').style.visibility = view==='meta' ? 'hidden' : '';
+  $('filters').style.visibility = (view==='meta'||view==='disparos') ? 'hidden' : '';
   document.querySelectorAll('#nav a').forEach(a=>{ const on=a.dataset.v===view;
     a.className='flex items-center gap-2.5 px-2 py-2 rounded-md '+(on?'bg-accent text-zinc-900 font-medium':'hover:bg-accent'); });
   render();
@@ -506,7 +581,7 @@ function filtered(skipCanal){
     && (!faixa || r[C.faixa]===faixa));
 }
 
-function render(){ if(!rows) return; if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); }
+function render(){ if(!rows) return; if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); if(view==='disparos') renderDisp(); }
 function renderCap(){
   const rs = filtered(false), L = sum(rs,'l');
   const na = sum(rs.filter(r=>r[C.seg]==='Não aluno'),'l'), al = L-na, gr = sum(rs,'g');
@@ -646,6 +721,91 @@ function renderPen(){
 
 const brl = (v,d=0) => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
 let mtAba = 'leads';
+function renderDisp(){
+  const sumD = (rs,k) => rs.reduce((s,r)=>s+r[CD[k]],0);
+  const porUtm = (u, canal) => rowsDisp.filter(r => r[CD.content] === u && (!canal || r[CD.canal] === canal));
+  const linhas = DISPAROS.map(d => {
+    const x = porUtm(d.utm, d.canal), l = sumD(x,'l');
+    return { ...d, l, g:sumD(x,'g'), na:sumD(x,'na'), resp:sumD(x,'resp'), ab:sumD(x,'ab'),
+             tx: d.entregues ? l/d.entregues : null, cpl: l ? d.custo/l : null };
+  });
+  const ativos = linhas.filter(d => d.l > 0);
+  const tl = linhas.reduce((s,d)=>s+d.l,0), tc = linhas.reduce((s,d)=>s+d.custo,0), te = linhas.reduce((s,d)=>s+d.entregues,0);
+
+  $('dpQtd').textContent = fmt(DISPAROS.length);
+  $('dpQtdSub').textContent = `${fmt(te)} mensagens entregues · ${fmt(linhas.reduce((s,d)=>s+d.base,0))} na base`;
+  $('dpLeads').textContent = fmt(tl);
+  $('dpLeadsSub').textContent = tl ? `${pct(tl, sum(rows,'l'))} de toda a captação` : 'nenhum lead com esses utm_content ainda';
+  $('dpTx').textContent = te ? pct(tl,te) : '–';
+  $('dpTxSub').textContent = `${fmt(tl)} leads para ${fmt(te)} entregues`;
+  $('dpCpl').textContent = tl ? brl(tc/tl,2) : '–';
+  $('dpCplSub').textContent = `${brl(tc,2)} investidos no total`;
+  const melhor = ativos.filter(d=>d.cpl!==null).sort((a,b)=>a.cpl-b.cpl)[0];
+  $('dpMelhor').textContent = melhor ? brl(melhor.cpl,2) : '–';
+  $('dpMelhorSub').textContent = melhor ? melhor.utm : 'aguardando leads';
+
+  const th='text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td='text-right py-2.5 px-3 border-b';
+  const maxTx = Math.max(...linhas.map(d=>d.tx||0), 0.0001);
+  let h = `<tr><th class="${th} !text-left">Disparo</th><th class="${th}">Data</th><th class="${th}">Base</th><th class="${th}">Entregues</th><th class="${th}">Leads</th><th class="${th} w-[150px]">Conversão</th><th class="${th}">Custo</th><th class="${th}">CPL</th><th class="${th}">Não alunos</th><th class="${th}">No grupo</th></tr>`;
+  for(const d of linhas){
+    const dt = d.data ? `${d.data.slice(8)}/${d.data.slice(5,7)}` : '–';
+    h += `<tr class="hover:bg-zinc-50"><td class="${td} !text-left"><div class="font-semibold text-zinc-900">${d.nome}</div><div class="text-[10px] text-zinc-500">${d.utm} · ${d.publico}</div></td>
+      <td class="${td} text-zinc-600">${dt}<div class="text-[10px] text-zinc-400">${d.hora||''}</div></td>
+      <td class="${td} text-zinc-600">${fmt(d.base)}</td><td class="${td} text-zinc-600">${fmt(d.entregues)}</td>
+      <td class="${td} font-bold text-indigo-600">${fmt(d.l)}</td>
+      <td class="${td}"><div class="flex items-center justify-end gap-2"><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-emerald-500" style="width:${(d.tx||0)/maxTx*100}%"></i></span><b class="w-[46px] text-emerald-600">${d.tx===null?'–':pct(d.l,d.entregues)}</b></div></td>
+      <td class="${td} text-zinc-600">${brl(d.custo,2)}</td>
+      <td class="${td} font-bold ${d.cpl===null?'text-zinc-300':'text-amber-600'}">${d.cpl===null?'–':brl(d.cpl,2)}</td>
+      <td class="${td} text-blue-600">${d.l?pct(d.na,d.l,0):'–'}</td><td class="${td} text-emerald-600">${d.l?pct(d.g,d.l,0):'–'}</td></tr>`;
+  }
+  h += `<tr class="bg-zinc-50 font-bold"><td class="${td} !text-left text-zinc-900">Total</td><td class="${td}"></td>
+    <td class="${td}">${fmt(linhas.reduce((s,d)=>s+d.base,0))}</td><td class="${td}">${fmt(te)}</td>
+    <td class="${td} text-indigo-600">${fmt(tl)}</td><td class="${td} text-emerald-600">${te?pct(tl,te):'–'}</td>
+    <td class="${td}">${brl(tc,2)}</td><td class="${td} text-amber-600">${tl?brl(tc/tl,2):'–'}</td><td class="${td}"></td><td class="${td}"></td></tr>`;
+  $('dpTabela').innerHTML = h;
+  $('dpNota').textContent = tl ? 'Conversão calculada sobre as mensagens entregues. CPL = custo do disparo dividido pelos leads que chegaram com aquele utm_content.'
+    : 'Nenhum lead chegou ainda com esses utm_content. Confira se o painel já está lendo a planilha desta campanha e se o utm_content na lista DISPAROS é igual ao do link do disparo.';
+
+  // barras por copy
+  const bm = Math.max(...linhas.map(d=>d.tx||0), 0.0001);
+  $('dpBarras').innerHTML = linhas.map(d=>`<div class="grid grid-cols-[88px_1fr_120px] items-center gap-3 text-[12px]">
+    <span class="font-semibold text-zinc-700">${d.utm}</span>
+    <span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${(d.tx||0)/bm*100}%;background:${d.publico==='Alunos'?'#10b981':'#6366f1'}"></i></span>
+    <span class="text-right tabnum"><b class="text-zinc-900">${d.tx===null?'–':pct(d.l,d.entregues)}</b> <span class="text-zinc-400">${fmt(d.l)} leads</span></span></div>`).join('')
+    || '<p class="text-[12px] text-muted-foreground">Nenhum disparo cadastrado.</p>';
+
+  // por público
+  const pubs = [...new Set(linhas.map(d=>d.publico))];
+  $('dpPublico').innerHTML = pubs.map(p=>{
+    const x = linhas.filter(d=>d.publico===p), l = x.reduce((s,d)=>s+d.l,0), e = x.reduce((s,d)=>s+d.entregues,0), c = x.reduce((s,d)=>s+d.custo,0);
+    const al = p==='Alunos';
+    const box = al ? 'border-emerald-100 bg-emerald-50/40' : 'border-indigo-100 bg-indigo-50/40';
+    const tit = al ? 'text-emerald-800' : 'text-indigo-800', num = al ? 'text-emerald-600' : 'text-indigo-600';
+    return `<div class="rounded-lg border ${box} p-5">
+      <div class="flex items-baseline justify-between"><div class="text-[10px] font-bold uppercase tracking-wider ${tit}">${p}</div><div class="text-[10px] text-zinc-500">${x.length} disparo${x.length>1?'s':''}</div></div>
+      <div class="grid grid-cols-3 gap-3 mt-4">
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Leads</div><div class="text-[22px] font-bold text-zinc-900 tabnum">${fmt(l)}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Conversão</div><div class="text-[22px] font-bold ${num} tabnum">${e?pct(l,e):'–'}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">CPL</div><div class="text-[22px] font-bold text-amber-500 tabnum">${l?brl(c/l,2):'–'}</div></div>
+      </div></div>`;
+  }).join('');
+
+  // outros utm_content
+  const cadastrados = new Set(DISPAROS.map(d=>d.utm));
+  const outros = {};
+  rowsDisp.forEach(r=>{ const u=r[CD.content]; if(cadastrados.has(u)) return;
+    const k = u+'|'+r[CD.canal]; (outros[k] = outros[k] || {u, c:r[CD.canal], l:0, g:0, na:0})
+    ; outros[k].l += r[CD.l]; outros[k].g += r[CD.g]; outros[k].na += r[CD.na]; });
+  const ov = Object.values(outros).sort((a,b)=>b.l-a.l).slice(0,20);
+  $('dpOutros').innerHTML = `<tr><th class="${th} !text-left">utm_content</th><th class="${th} !text-left">Canal</th><th class="${th}">Leads</th><th class="${th}">% do canal</th><th class="${th}">Não alunos</th><th class="${th}">No grupo</th></tr>` +
+    (ov.length ? ov.map(o=>{ const canalTot = sum(rows.filter(r=>r[C.canal]===o.c),'l');
+      return `<tr class="hover:bg-zinc-50"><td class="${td} !text-left font-semibold text-zinc-900">${o.u}</td>
+      <td class="${td} !text-left"><span class="inline-flex items-center gap-2">${logo(o.c)}${o.c}</span></td>
+      <td class="${td} font-semibold">${fmt(o.l)}</td><td class="${td} text-zinc-500">${pct(o.l,canalTot)}</td>
+      <td class="${td} text-blue-600">${pct(o.na,o.l,0)}</td><td class="${td} text-emerald-600">${pct(o.g,o.l,0)}</td></tr>`; }).join('')
+      : `<tr><td class="${td} !text-left text-zinc-400" colspan="6">Todos os utm_content da base já estão cadastrados.</td></tr>`);
+}
+
 function renderMeta(){
   const M = META, metaLeads = M.matriz.leads.Total.at(-1);
   const L = sum(rows,'l');
