@@ -449,11 +449,17 @@ const CLUSTER_IMAGENS = {
 // ===== DISPAROS (AwSales) — acrescente uma linha por disparo =====
 // 'utm' é o utm_content que identifica o disparo na base de leads.
 const DISPAROS = [
-  // 'utm' = utm_content exato do link. Opcional: canal:'awsales' se o mesmo utm for usado em outro canal.
-  { utm:'F1-ALU-T1', nome:'DIRETO FDS - Alunos - Copy 1 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:963, custo:173.54, funil:'W01 - OFR', responsavel:'Luizin' },
-  { utm:'F1-ALU-T2', nome:'DIRETO FDS - Alunos - Copy 2 - SECO',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:955, custo:171.90, funil:'W01 - OFR', responsavel:'Luizin' },
-  { utm:'F1-NAL-T1', nome:'DIRETO FDS - NÃO Alunos - Copy 1 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:965, custo:173.70, funil:'W01 - OFR', responsavel:'Luizin' },
-  { utm:'F1-NAL-T2', nome:'DIRETO FDS - NÃO Alunos - Copy 2 - SECO', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:970, custo:174.60, funil:'W01 - OFR', responsavel:'Luizin' },
+  // 'utm' = utm_content exato do link (atenção: F1 e F2 são com o número 1 e 2, não com a letra i).
+  // Opcional: canal:'awsales' se o mesmo utm_content for usado em outro canal.
+  { utm:'F1-ALU-T1',  nome:'Fase 1 · DIRETO FDS - Alunos - Copy 1',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:963,  custo:173.54,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F1-ALU-T2',  nome:'Fase 1 · DIRETO FDS - Alunos - Copy 2',     publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:955,  custo:171.90,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F1-NAL-T1',  nome:'Fase 1 · DIRETO FDS - NÃO Alunos - Copy 1', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:965,  custo:173.70,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F1-NAL-T2',  nome:'Fase 1 · DIRETO FDS - NÃO Alunos - Copy 2', publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-09-30', hora:'20:30', base:1000, entregues:970,  custo:174.60,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F2-ALU-RES', nome:'Fase 2 · Resgate - Alunos',                 publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-10-01', hora:'19:00', base:1000, entregues:980,  custo:176.40,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F2-ALU-DIR', nome:'Fase 2 · Direto - Alunos',                  publico:'Alunos',     campanha:'CAPTAÇÃO - EQJC', data:'2026-10-01', hora:'19:00', base:1000, entregues:978,  custo:176.04,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F2-NAL-RES', nome:'Fase 2 · Resgate - NÃO Alunos',             publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-10-01', hora:'19:00', base:1000, entregues:882,  custo:158.76,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F2-NAL-DIR', nome:'Fase 2 · Direto - NÃO Alunos',              publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-10-01', hora:'19:00', base:1000, entregues:877,  custo:157.86,  funil:'W01 - OFR', responsavel:'Luizin' },
+  { utm:'F2-NAL-ESC', nome:'Fase 2 · Escala - NÃO Alunos',              publico:'Não alunos', campanha:'CAPTAÇÃO - EQJC', data:'2026-10-01', hora:'19:00', base:6339, entregues:6057, custo:1090.26, funil:'W01 - OFR', responsavel:'Luizin' },
 ];
 // ===== META DA CAMPANHA (atualize a cada lançamento, copiando da planilha de metas) =====
 const META = {
@@ -749,24 +755,30 @@ function renderDisp(){
 
   const th='text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td='text-right py-2.5 px-3 border-b';
   const maxTx = Math.max(...linhas.map(d=>d.tx||0), 0.0001);
-  let h = `<tr><th class="${th} !text-left">Disparo</th><th class="${th}">Data</th><th class="${th}">Base</th><th class="${th}">Entregues</th><th class="${th}">Leads</th><th class="${th} w-[150px]">Conversão</th><th class="${th}">Custo</th><th class="${th}">CPL</th><th class="${th}">Não alunos</th><th class="${th}">No grupo</th></tr>`;
+  let h = `<tr><th class="${th} !text-left">Disparo</th><th class="${th}">Data</th><th class="${th}">Entregues</th><th class="${th}">Entregab.</th><th class="${th}">Leads</th><th class="${th} w-[150px]">Conversão</th><th class="${th}">Custo</th><th class="${th}">CPL</th><th class="${th}">No grupo</th><th class="${th}">Pesquisa</th><th class="${th}">A+B</th></tr>`;
   for(const d of linhas){
     const dt = d.data ? `${d.data.slice(8)}/${d.data.slice(5,7)}` : '–';
     h += `<tr class="hover:bg-zinc-50"><td class="${td} !text-left"><div class="font-semibold text-zinc-900">${d.nome}</div><div class="text-[10px] text-zinc-500">${d.utm} · ${d.publico}</div></td>
       <td class="${td} text-zinc-600">${dt}<div class="text-[10px] text-zinc-400">${d.hora||''}</div></td>
-      <td class="${td} text-zinc-600">${fmt(d.base)}</td><td class="${td} text-zinc-600">${fmt(d.entregues)}</td>
+      <td class="${td} text-zinc-600">${fmt(d.entregues)}<div class="text-[10px] text-zinc-400">de ${fmt(d.base)}</div></td>
+      <td class="${td} ${d.entregues/d.base<0.9?'text-red-500 font-semibold':'text-zinc-600'}">${pct(d.entregues,d.base,0)}</td>
       <td class="${td} font-bold text-indigo-600">${fmt(d.l)}</td>
-      <td class="${td}"><div class="flex items-center justify-end gap-2"><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-emerald-500" style="width:${(d.tx||0)/maxTx*100}%"></i></span><b class="w-[46px] text-emerald-600">${d.tx===null?'–':pct(d.l,d.entregues)}</b></div></td>
+      <td class="${td}"><div class="flex items-center justify-end gap-2"><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-emerald-500" style="width:${(d.tx||0)/maxTx*100}%"></i></span><b class="w-[46px] text-emerald-600">${d.tx===null?'–':pct(d.l,d.entregues,2)}</b></div></td>
       <td class="${td} text-zinc-600">${brl(d.custo,2)}</td>
       <td class="${td} font-bold ${d.cpl===null?'text-zinc-300':'text-amber-600'}">${d.cpl===null?'–':brl(d.cpl,2)}</td>
-      <td class="${td} text-blue-600">${d.l?pct(d.na,d.l,0):'–'}</td><td class="${td} text-emerald-600">${d.l?pct(d.g,d.l,0):'–'}</td></tr>`;
+      <td class="${td} text-emerald-600">${d.l?pct(d.g,d.l,0):'–'}</td>
+      <td class="${td} text-blue-600">${d.l?pct(d.resp,d.l,0):'–'}</td>
+      <td class="${td} text-amber-600 font-semibold">${d.resp?pct(d.ab,d.resp,0):'–'}</td></tr>`;
   }
+  const tb = linhas.reduce((s,d)=>s+d.base,0), tg = linhas.reduce((s,d)=>s+d.g,0), tr2 = linhas.reduce((s,d)=>s+d.resp,0), tab = linhas.reduce((s,d)=>s+d.ab,0);
   h += `<tr class="bg-zinc-50 font-bold"><td class="${td} !text-left text-zinc-900">Total</td><td class="${td}"></td>
-    <td class="${td}">${fmt(linhas.reduce((s,d)=>s+d.base,0))}</td><td class="${td}">${fmt(te)}</td>
-    <td class="${td} text-indigo-600">${fmt(tl)}</td><td class="${td} text-emerald-600">${te?pct(tl,te):'–'}</td>
-    <td class="${td}">${brl(tc,2)}</td><td class="${td} text-amber-600">${tl?brl(tc/tl,2):'–'}</td><td class="${td}"></td><td class="${td}"></td></tr>`;
+    <td class="${td}">${fmt(te)}<div class="text-[10px] text-zinc-400 font-normal">de ${fmt(tb)}</div></td><td class="${td}">${pct(te,tb,0)}</td>
+    <td class="${td} text-indigo-600">${fmt(tl)}</td><td class="${td} text-emerald-600">${te?pct(tl,te,2):'–'}</td>
+    <td class="${td}">${brl(tc,2)}</td><td class="${td} text-amber-600">${tl?brl(tc/tl,2):'–'}</td>
+    <td class="${td} text-emerald-600">${tl?pct(tg,tl,0):'–'}</td><td class="${td} text-blue-600">${tl?pct(tr2,tl,0):'–'}</td>
+    <td class="${td} text-amber-600">${tr2?pct(tab,tr2,0):'–'}</td></tr>`;
   $('dpTabela').innerHTML = h;
-  $('dpNota').textContent = tl ? 'Conversão calculada sobre as mensagens entregues. CPL = custo do disparo dividido pelos leads que chegaram com aquele utm_content.'
+  $('dpNota').textContent = tl ? 'Conversão sobre as mensagens entregues. CPL = custo ÷ leads com aquele utm_content. A+B é sobre quem respondeu a pesquisa. Entregabilidade abaixo de 90% aparece em vermelho e costuma indicar base desgastada.'
     : 'Nenhum lead chegou ainda com esses utm_content. Confira se o painel já está lendo a planilha desta campanha e se o utm_content na lista DISPAROS é igual ao do link do disparo.';
 
   // barras por copy
