@@ -518,7 +518,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
 
 <script>
 // ===== CONFIGURAÇÃO =====
-const VERSAO = 'painel v13';
+const VERSAO = 'painel v14';
 const WEBHOOK_URL = 'https://n8n.pauloaguiarx.com.br/webhook/painel-captacao';
 const ATUALIZAR_A_CADA_MIN = 15;   // minutos entre revalidações (cache local evita leituras repetidas)
 // Imagem de cada canal (utm_source). Pode ser o site da ferramenta (vira o ícone dela)
@@ -1241,6 +1241,7 @@ function renderPace(V, K, vs, apRows, AK){
 
   // séries diárias
   const temDataAplic = diasA.length > 0;
+  const colsAplic = (V.diag && V.diag['Aplicações'] && V.diag['Aplicações'].todas) || [];
   const totAplicComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
   const serie = {
     vendas: dias.map(d=>vs.filter(r=>r[K.dia]===d).length),
@@ -1334,7 +1335,7 @@ function renderPace(V, K, vs, apRows, AK){
         <div class="text-[13px] font-bold text-zinc-900">${rot}</div>
         <div class="text-[11px] tabnum"><span class="text-zinc-500">acumulado</span> <b class="text-zinc-900">${v(feito)}</b> <span class="text-zinc-400">·</span> <span class="text-zinc-500">previsto</span> <b class="text-zinc-900">${v(esp)}</b> <span class="text-zinc-400">·</span> <b class="${atras?'text-red-600':'text-emerald-600'}">${atras?`${v(esp-feito)} abaixo`:`${v(feito-esp)} acima`}</b></div>
       </div>
-      ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3"><b>A aba Aplicações não tem coluna de data.</b> Por isso as ${fmt(totAplicComp)} aplicações caem todas no primeiro dia e os dias seguintes repetem o mesmo acumulado. Adicione a coluna de data na aba que a curva se distribui sozinha.</p>`:''}
+      ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3"><b>Não achei coluna de data na aba Aplicações</b>, então as ${fmt(totAplicComp)} caem todas no primeiro dia.${colsAplic.length?` As colunas da aba são: ${colsAplic.map(c=>`<code class="bg-white/70 rounded px-1">${c}</code>`).join(' ')}. Me diga qual é a de envio.`:''}</p>`:''}
       ${Math.abs(foraDaJanela) > (k==='cash' ? 1 : 0.5) ? `<p class="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3"><b>${v(Math.abs(foraDaJanela))} ${foraDaJanela>0?'de fora da janela':'a mais que o total'}.</b> ${foraDaJanela>0?`Há registros com data fora de ${ddmm(ini)}–${ddmm(fim)}. Ajuste <code>periodo_vendas</code> ou confira a coluna de data.`:'Confira a janela configurada.'}</p>`:''}
       <div class="overflow-x-auto">${g}</div></div>`;
   }).join('');
