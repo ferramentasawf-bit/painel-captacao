@@ -1,451 +1,1649 @@
-// Nó "Code" (Run Once for All Items). Lê "Base Leads" e "Grupos Send" e devolve só números agregados.
-// Nome da campanha: deixe '' para detectar sozinho (utm_campaign mais frequente) ou escreva um nome fixo.
-const CAMPANHA_FIXA = '';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Mamba · Captação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','ui-sans-serif','system-ui','sans-serif']},
+colors:{background:'var(--background)',foreground:'var(--foreground)',muted:'var(--muted)','muted-foreground':'var(--muted-foreground)',border:'var(--border)',accent:'var(--accent)',sidebar:'var(--sidebar)','sidebar-foreground':'var(--sidebar-foreground)'}}}}
+</script>
+<style>
+:root{--background:#ffffff;--foreground:#0a0a0a;--card:#ffffff;--muted:#f4f4f5;--muted-foreground:#71717a;--border:#e4e4e7;--accent:#f4f4f5;--primary:#18181b;--primary-foreground:#fafafa;--sidebar:#fafafa;--sidebar-foreground:#3f3f46;color-scheme:light}
+html,body{height:100%}
+body{background:var(--background);color:var(--foreground);font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{border-color:var(--border)}
+.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ico-sm{width:12px;height:12px}
+select,input{outline:none}
+select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid #6366f1;outline-offset:1px}
+.tabnum{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body class="text-foreground">
+<svg width="0" height="0" style="position:absolute">
+ <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+ <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+ <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></symbol>
+ <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></symbol>
+ <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+ <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+ <symbol id="i-link" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 1 1 0 10h-2M8 12h8"/></symbol>
+ <symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+ <symbol id="i-magnet" viewBox="0 0 24 24"><path d="m6 15-4-4 6.8-6.8a7.1 7.1 0 0 1 10 10L12 21l-4-4 6.8-6.8a1.4 1.4 0 0 0-2-2Z"/><path d="m5 8 4 4M12 15l4 4"/></symbol>
+ <symbol id="i-cog" viewBox="0 0 24 24"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></symbol>
+ <symbol id="i-building" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+ <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+ <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+ <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+ <symbol id="i-grad" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+ <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8Z"/><path d="m22 17.6-9.2 4.2a2 2 0 0 1-1.6 0L2 17.6M22 12.6l-9.2 4.2a2 2 0 0 1-1.6 0L2 12.6"/></symbol>
+ <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
+ <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 2h3l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol>
+ <symbol id="i-msg" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+</svg>
 
-const leads  = $('Base Leads').all().map(i => i.json);
-const grupos = $('Grupos Send').all().map(i => i.json);
+<div class="flex min-h-full">
+ <aside class="hidden md:flex w-[208px] shrink-0 flex-col bg-sidebar border-r">
+  <div class="h-[45px] flex items-center gap-2.5 px-2 border-b">
+   <div class="w-7 h-7 rounded-md bg-zinc-900 text-white grid place-items-center"><svg class="ico"><use href="#i-building"/></svg></div>
+   <div class="flex-1 leading-tight"><div class="text-[13px] font-semibold text-zinc-900">Painel Mamba</div><div class="text-[11px] text-muted-foreground">Captação</div></div>
+   <svg class="ico text-muted-foreground mr-1"><use href="#i-chev"/></svg>
+  </div>
+  <nav class="p-2 pt-3 flex flex-col gap-0.5 text-[13px] text-sidebar-foreground" id="nav">
+   <a data-v="captacao" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#captacao"><svg class="ico"><use href="#i-magnet"/></svg>Captação</a>
+   <a data-v="composicao" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#composicao"><svg class="ico"><use href="#i-layers"/></svg>Composição da Base</a>
+   <a data-v="disparos" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#disparos"><svg class="ico"><use href="#i-send"/></svg>Disparos</a>
+   <a data-v="meta" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#meta"><svg class="ico"><use href="#i-target"/></svg>Meta</a>
+   <a data-v="vendas" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#vendas"><svg class="ico"><use href="#i-dollar"/></svg>Vendas</a>
+  </nav>
+ </aside>
 
-const txt = v => String(v ?? '').trim();
-const um  = v => txt(v) === '1';
-const sim = v => txt(v).toLowerCase() === 'sim';
+ <div class="flex-1 min-w-0 flex flex-col">
+  <div class="h-[45px] border-b shrink-0"></div>
+  <main class="flex-1 px-4 md:px-8 pt-10 pb-16">
+   <div class="max-w-[1066px] mx-auto">
 
-function toISO(v) {
-  if (v === null || v === undefined || v === '') return null;
-  if (typeof v === 'number') return new Date(Math.round((v - 25569) * 86400000)).toISOString().slice(0, 10);
-  const s = txt(v);
-  // ISO: 2026-10-07 / 2026-10-07T10:02 / 2026/10/07 10:02
-  let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
-  if (m) return `${m[1]}-${String(+m[2]).padStart(2,'0')}-${String(+m[3]).padStart(2,'0')}`;
-  // BR: 07/10/2026 · 07-10-2026 · 07.10.2026 — com ou sem hora depois
-  m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
-  if (!m) return null;
-  let a = +m[1], b = +m[2];
-  if (b > 12) { const t = a; a = b; b = t; }            // veio mm/dd
-  return `${m[3]}-${String(b).padStart(2, '0')}-${String(a).padStart(2, '0')}`;
-}
-const amanha = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-const hoje = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0, 10);
-const inicioJanela = new Date(Date.now() - 75 * 86400000).toISOString().slice(0, 10);
+    <div class="flex flex-wrap items-start justify-between gap-5">
+     <div>
+      <span class="inline-flex items-center gap-2 bg-indigo-600 text-white text-[12px] font-semibold px-3 py-1.5 rounded-md"><svg class="ico ico-sm" style="width:14px;height:14px"><use href="#i-video"/></svg>Webinar <span id="camp"></span></span>
+      <button id="reload" title="Ignora o cache e lê a planilha de novo" class="inline-flex items-center gap-1.5 border bg-white hover:bg-accent text-zinc-600 text-[11px] font-semibold px-2.5 py-1.5 rounded-md ml-1.5 align-middle"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Atualizar agora</button>
+      <span id="ver" class="text-[10px] text-zinc-400 ml-2 align-middle"></span>
+      <h1 id="vTitle" class="text-[32px] font-bold tracking-tight text-zinc-900 mt-2 leading-tight"></h1>
+      <p id="vSub" class="text-[13px] text-muted-foreground mt-1"></p>
+     </div>
+     <div id="filters" class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-center gap-1 border rounded-lg px-2 py-1 bg-white text-[12px]">
+       <select id="fCanal" aria-label="Canal" class="bg-transparent px-1.5 py-1"></select>
+       <span class="text-zinc-300">|</span>
+       <select id="fSeg" aria-label="Perfil" class="bg-transparent px-1.5 py-1"></select>
+       <span class="text-zinc-300">|</span>
+       <select id="fFaixa" aria-label="Score" class="bg-transparent px-1.5 py-1"></select>
+       <span class="text-zinc-300">|</span>
+       <input id="meta" type="number" min="0" step="100" placeholder="Meta (padrão: aba Meta)" aria-label="Meta de leads" class="w-[170px] bg-transparent px-1.5 py-1">
+      </div>
+      <button id="apply" class="text-[12px] font-semibold text-white px-4 py-2 rounded-lg bg-indigo-300 transition-colors">Aplicar</button>
+     </div>
+    </div>
 
-// O Google Sheets às vezes devolve a mesma coluna em dd/mm e em mm/dd.
-// Se a data cair fora da janela da campanha, tenta a leitura invertida.
-function toISOLead(v) {
-  const iso = toISO(v);
-  if (!iso) return null;
-  if (iso >= inicioJanela && iso <= amanha) return iso;
-  const inv = `${iso.slice(0, 4)}-${iso.slice(8, 10)}-${iso.slice(5, 7)}`;
-  if (inv >= inicioJanela && inv <= amanha) return inv;
-  return iso;
-}
+    <div id="v-captacao">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
+     <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-target"/></svg>Total de leads</div>
+      <div id="kLeads" class="text-[32px] font-bold text-blue-600 mt-2 tabnum"></div>
+      <div id="kLeadsSub" class="text-[9.5px] text-blue-500 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Perfil do lead</div>
+      <div class="flex gap-7 mt-5">
+       <div><div class="text-[9px] font-semibold uppercase tracking-wider text-indigo-400">Não alunos</div><div id="kNa" class="text-[22px] font-bold text-indigo-600 mt-1 tabnum"></div><div id="kNaN" class="text-[9.5px] text-indigo-400"></div></div>
+       <div><div class="text-[9px] font-semibold uppercase tracking-wider text-indigo-400">Alunos</div><div id="kAl" class="text-[22px] font-bold text-indigo-600 mt-1 tabnum"></div><div id="kAlN" class="text-[9.5px] text-indigo-400"></div></div>
+      </div>
+     </div>
+     <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-msg"/></svg>Leads nos grupos</div>
+      <div id="kGr" class="text-[32px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="kGrSub" class="text-[9.5px] text-emerald-600/80 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-file"/></svg>Pesquisa de qualificação</div>
+      <div id="kResp" class="text-[32px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="kRespSub" class="text-[9.5px] text-amber-600/80 mt-1"></div>
+     </div>
+    </div>
 
-// ---- helpers usados pelos blocos de Aquisição e de Vendas ----
-// ---- localizador de colunas (estrito) + leitura de dinheiro à prova de data ----
-const slug = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g,'')
-  .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    <section class="rounded-xl border bg-white px-7 py-7 mt-10">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <div class="flex flex-wrap gap-2">
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-target"/></svg>Pacing de captação</span>
+        <span class="inline-flex items-center gap-1.5 rounded-full border text-zinc-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-users"/></svg><span id="pillGrp"></span></span>
+       </div>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Linha do Tempo</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Em cada barra: <b class="text-zinc-700">acumulado</b> e, em laranja, <b class="text-orange-500">+ captado no dia</b>.</p>
+      </div>
+      <div class="text-right pt-6">
+       <div id="paceLbl" class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600"></div>
+       <div class="mt-1"><span id="pace" class="text-[21px] font-bold text-zinc-900 tabnum"></span> <span class="text-[12px] text-muted-foreground">/dia</span></div>
+      </div>
+     </div>
+     <div id="chart" class="overflow-x-auto mt-6"></div>
 
-// Acha a coluna: 1) nome idêntico; 2) nome que CONTÉM a chave, e só com chave de 5+ letras.
-// Nunca o contrário (chave contendo o nome), que era o que fazia 'valor' casar com qualquer coisa.
-function achaCol(linhas, chaves){
-  const nomes = new Set();
-  for (const r of linhas.slice(0, 50)) for (const k of Object.keys(r)) if (slug(k)) nomes.add(k);
-  const mapa = {}; for (const k of nomes) mapa[slug(k)] = k;
-  for (const c of chaves){ const s = slug(c); if (s && mapa[s] !== undefined) return mapa[s]; }
-  for (const c of chaves){ const s = slug(c); if (s.length < 5) continue;
-    const hit = [...Object.keys(mapa)].sort((a,b)=>a.length-b.length).find(k => k.includes(s));
-    if (hit) return mapa[hit]; }
-  return null;
-}
-function mapearColunas(linhas, defs){
-  const m = {}; for (const k of Object.keys(defs)) m[k] = achaCol(linhas, defs[k]);
-  // se a data resolveu para uma coluna de vencimento, descarta: não é pagamento
-  if (m.data && DATA_PROIBIDA.some(x => slug(m.data).includes(x))) m.data = null;
-  return m;
-}
-// ordem dos cabeçalhos como a aba entregou (para o diagnóstico do painel)
-function ordemColunas(linhas){
-  const v = []; for (const r of linhas.slice(0,50)) for (const k of Object.keys(r)) if (!v.includes(k)) v.push(k);
-  return v;
-}
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5">
+      <div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-5">
+       <div id="dayTitle" class="text-[10px] font-bold uppercase tracking-wider text-emerald-800"></div>
+       <div class="grid grid-cols-3 gap-3 mt-5">
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Leads (no dia)</div><div id="dLeads" class="text-[28px] font-bold text-amber-500 tabnum"></div></div>
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">No grupo (dia)</div><div id="dGr" class="text-[28px] font-bold text-emerald-600 tabnum"></div></div>
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Não alunos (dia)</div><div id="dNa" class="text-[28px] font-bold text-emerald-600 tabnum"></div></div>
+       </div>
+       <div class="border-t border-emerald-100 my-4"></div>
+       <div class="grid grid-cols-3 gap-3">
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Acumul. leads</div><div id="dCum" class="text-[18px] font-bold text-amber-500 tabnum"></div></div>
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Acumul. no grupo</div><div id="dCumG" class="text-[18px] font-bold text-emerald-600 tabnum"></div></div>
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Score A + B</div><div id="dAB" class="text-[18px] font-bold text-emerald-600 tabnum"></div></div>
+       </div>
+      </div>
+      <div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-5">
+       <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Meta final (total)</div>
+       <div class="grid grid-cols-2 gap-3 mt-5">
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Meta de leads</div><div id="mMeta" class="text-[28px] font-bold text-amber-500 tabnum"></div></div>
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Realizado (total)</div><div id="mReal" class="text-[28px] font-bold text-emerald-600 tabnum"></div></div>
+       </div>
+       <div class="border-t border-emerald-100 my-4"></div>
+       <div class="grid grid-cols-2 gap-3">
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Gap (%) - falta</div><div id="mGapP" class="text-[18px] font-bold tabnum"></div></div>
+        <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Faltam (qtd)</div><div id="mGap" class="text-[18px] font-bold text-emerald-600 tabnum"></div></div>
+       </div>
+      </div>
+     </div>
+    </section>
 
-// Colunas que NUNCA devem ser usadas como data do pagamento
-const DATA_PROIBIDA = ['vencimento','vence em','due date','previsao'];
-const PARECE_DATA = /\d{1,4}\s*[\/\-]\s*\d{1,2}\s*[\/\-]\s*\d{2,4}|\d{1,2}:\d{2}/;
-const TETO_VALOR  = 1e7;   // nenhuma venda isolada passa de R$ 10 milhões
 
-function num(v){
-  if (typeof v === 'number') return v;
-  let s = String(v ?? '').trim(); if (!s) return 0;
-  s = s.replace(/[^\d,.-]/g,'');  if (!s) return 0;
-  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',','.');
-  else if (s.includes(',')) s = s.replace(',','.');
-  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');   // 1.784 = mil setecentos
-  return parseFloat(s) || 0;
-}
-// Dinheiro: recusa o que tem cara de data/hora e o que estoura o teto.
-function dinheiro(v, diag, campo){
-  const cru = String(v ?? '').trim();
-  if (cru && PARECE_DATA.test(cru)) { if (diag) diag.recusados[campo] = (diag.recusados[campo]||0)+1; return 0; }
-  const n = num(v);
-  if (Math.abs(n) > TETO_VALOR) { if (diag) diag.recusados[campo] = (diag.recusados[campo]||0)+1; return 0; }
-  return n;
-}
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Base de aquisição</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Captação da Base de Alunos</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">De todos os alunos de cada cluster, quantos já se inscreveram neste webinar. Clusters contados a partir da data do evento.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Alunos 7D a 30D captados</div>
+       <div class="mt-1"><span id="penRecent" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
+     </div>
+     <div id="penGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6"></div>
+     <p class="text-[11px] text-muted-foreground mt-4">Calculado sobre a aba Base AQUISIÇÃO (colunas lead e lead tel). Não muda com os filtros de canal, perfil e score.</p>
+    </section>
 
-const fone = v => { const d = txt(v).replace(/\D/g,''); return d.length >= 10 ? d.slice(-11) : ''; };
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>utm_source</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Performance por Canal</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Clique em um canal para filtrar o painel inteiro.</p>
+     <div class="overflow-x-auto mt-5"><table id="tCanal" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
 
-const noh = n => { try { const a = $(n).all(); return a && a.length ? a.map(i => i.json) : null; } catch(e){ return null; } };
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Leads do webinar</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Perfil dos Leads</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Quantos leads de cada cluster e quanto isso representa da base de alunos.</p>
+      <div id="bSeg" class="flex flex-col gap-3 mt-5"></div>
+     </section>
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-users"/></svg>SendFlow</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Membros por Grupo</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Total de membros em cada grupo VIP.</p>
+      <div id="bGrp" class="flex flex-col gap-3 mt-5"></div>
+     </section>
+    </div>
 
-const METRICAS = ['l','g','s','w','b','sb','asc','rup','cs','ht','p0','p1','p2','p3','w1','w2','w3','w4','w5','w6','w7'];
-const agg = {};
-const aggDisp = {};   // por disparo (utm_content)
-let removidos = 0;
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-target"/></svg>Yay Forms</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Score da Pesquisa</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Distribuição das faixas entre quem respondeu a pesquisa.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Faixas A + B</div>
+       <div class="mt-1"><span id="fxAB" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
+     </div>
+     <div id="bFx" class="flex flex-col gap-3 mt-5"></div>
+    </section>
 
-for (const r of leads) {
-  const email = txt(r['Email']).toLowerCase();
-  const source = txt(r['*utm_source']);
-  const dia = toISOLead(r['DATA CERTA']);
-  if (email.includes('test') || source === 'teste' || source === 'teste-uti' || source === 'qa' || !dia || dia > amanha) { removidos++; continue; }
+    </div>
 
-  const seg = um(r['Aluno 7D']) ? 'Aluno 7d' : um(r['Aluno 14D']) ? 'Aluno 14d' :
-              um(r['Aluno 30D']) ? 'Aluno 30d' : um(r['Aluno Antigo']) ? 'Aluno antigo' : 'Não aluno';
-  const canal = source || 'sem utm';
-  const fx = txt(r['FAIXA']);
-  const faixa = fx.startsWith('Faixa ') ? fx.slice(6) : 'Sem score';
+    <div id="v-composicao" hidden>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
+     <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-magnet"/></svg>Base nova</div>
+      <div id="cNovo" class="text-[32px] font-bold text-blue-600 mt-2 tabnum"></div>
+      <div id="cNovoSub" class="text-[9.5px] text-blue-500 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Sobrepostos</div>
+      <div id="cSob" class="text-[32px] font-bold text-indigo-600 mt-2 tabnum"></div>
+      <div id="cSobSub" class="text-[9.5px] text-indigo-400 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-cart"/></svg>Compradores FDS (back-end)</div>
+      <div id="cFds" class="text-[32px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="cFdsSub" class="text-[9.5px] text-emerald-600 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-layers"/></svg>Sobrepostos do FDS</div>
+      <div id="cSfds" class="text-[32px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="cSfdsA" class="flex items-baseline justify-between mt-2"></div>
+      <div id="cSfdsB" class="flex items-baseline justify-between mt-1.5"></div>
+     </div>
+    </div>
 
-  const edicoes = [1,2,3,4,5,6,7].map(i => txt(r[`*INSCRIÇÃO - W0${i}`]) !== '' ? 1 : 0);
-  const nPrev = edicoes.reduce((a, b) => a + b, 0);
-  const s = sim(r['Sobreposto']) ? 1 : 0, b = sim(r['Compradores Back-end']) ? 1 : 0;
+    <section class="rounded-xl border bg-white px-7 py-7 mt-10">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-layers"/></svg>Composição da base</span>
+     <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Novos x Sobrepostos x FDS</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Cada lead aparece em um único bloco. A barra mostra o peso de cada grupo na base.</p>
+     <div id="compBar" class="flex h-9 rounded-md overflow-hidden mt-6"></div>
+     <div id="compGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-5"></div>
+    </section>
 
-  const v = {
-    l: 1, g: um(r['NO GRUPO']) ? 1 : 0, s, w: sim(r['Lead Webinar']) ? 1 : 0, b, sb: s * b,
-    asc: sim(r['Lead Ascensão']) ? 1 : 0, rup: sim(r['Lead Ruptura']) ? 1 : 0,
-    cs: sim(r['Comunidade Sintonizar']) ? 1 : 0, ht: sim(r['Compradores High-Ticket']) ? 1 : 0,
-    p0: nPrev === 0 ? 1 : 0, p1: nPrev === 1 ? 1 : 0, p2: nPrev === 2 ? 1 : 0, p3: nPrev >= 3 ? 1 : 0,
-  };
-  edicoes.forEach((e, i) => v['w' + (i + 1)] = e);
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Coluna Sobreposto</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">De onde vem a sobreposição</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Listas em que o lead já estava. Uma pessoa pode estar em mais de uma, então as barras não somam o total.</p>
+      <div id="bOrig" class="flex flex-col gap-3 mt-5"></div>
+     </section>
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-video"/></svg>W01 a W07</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Reincidência em webinars</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Quantas edições anteriores o lead já se inscreveu, segundo as colunas de inscrição.</p>
+      <div id="bReinc" class="flex flex-col gap-3 mt-5"></div>
+      <div class="border-t my-5"></div>
+      <div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600 mb-3">Inscritos do W08 que estavam em cada edição</div>
+      <div id="bEdic" class="flex flex-col gap-2.5"></div>
+     </section>
+    </div>
 
-  const key = [dia, canal, seg, faixa].join('|');
-  if (!agg[key]) agg[key] = [dia, canal, seg, faixa, ...METRICAS.map(() => 0)];
-  METRICAS.forEach((m, i) => agg[key][4 + i] += v[m]);
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>Por canal e perfil</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Composição por Canal</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Quanto de cada canal é base nova, sobreposta ou já comprou o FDS. Clique em um canal para filtrar.</p>
+     <div class="overflow-x-auto mt-5"><table id="tComp" class="w-full text-[12.5px] tabnum"></table></div>
+     <div class="border-t my-6"></div>
+     <h3 class="text-[16px] font-bold text-zinc-900">Por cluster de aluno</h3>
+     <div class="overflow-x-auto mt-3"><table id="tCompSeg" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
+    </div>
 
-  // Por disparo: utm_content identifica o disparo
-  const content = txt(r['*utm_content']) || '(sem utm_content)';
-  const kd = [dia, canal, content].join('|');
-  if (!aggDisp[kd]) aggDisp[kd] = [dia, canal, content, 0, 0, 0, 0, 0];
-  const d = aggDisp[kd];
-  d[3] += 1;                                   // leads
-  d[4] += um(r['NO GRUPO']) ? 1 : 0;           // no grupo
-  d[5] += seg === 'Não aluno' ? 1 : 0;         // não alunos
-  d[6] += faixa !== 'Sem score' ? 1 : 0;       // respondeu a pesquisa
-  d[7] += (faixa === 'A' || faixa === 'B') ? 1 : 0;  // score A ou B
-}
+    <div id="v-disparos" hidden>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
+     <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-send"/></svg>Disparos realizados</div>
+      <div id="dpQtd" class="text-[32px] font-bold text-blue-600 mt-2 tabnum"></div>
+      <div id="dpQtdSub" class="text-[9.5px] text-blue-500 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-magnet"/></svg>Leads pelos disparos</div>
+      <div id="dpLeads" class="text-[32px] font-bold text-indigo-600 mt-2 tabnum"></div>
+      <div id="dpLeadsSub" class="text-[9.5px] text-indigo-400 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Taxa de conversão</div>
+      <div id="dpTx" class="text-[32px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="dpTxSub" class="text-[9.5px] text-emerald-600/80 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>CPL médio</div>
+      <div id="dpCpl" class="text-[32px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="dpCplSub" class="text-[9.5px] text-amber-600/80 mt-1"></div>
+     </div>
+    </div>
 
-// Campanha: utm_campaign mais frequente na base
-const contCamp = {};
-for (const r of leads) { const c = txt(r['*utm_campaingn']); if (c && !/^\d+$/.test(c)) contCamp[c] = (contCamp[c] || 0) + 1; }
-const CAMPANHA = CAMPANHA_FIXA || Object.entries(contCamp).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Campanha';
+    <section class="rounded-xl border bg-white px-7 py-7 mt-10">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>utm_content</span>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Performance por Disparo</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Conversão sobre as mensagens entregues e custo por lead de cada disparo.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Melhor CPL</div>
+       <div class="mt-1"><span id="dpMelhor" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div>
+       <div id="dpMelhorSub" class="text-[10px] text-zinc-500 mt-0.5"></div></div>
+     </div>
+     <div id="dpFiltro" class="flex flex-wrap gap-1.5 mt-5"></div>
+     <div class="overflow-x-auto mt-4"><table id="dpTabela" class="w-full text-[12.5px] tabnum"></table></div>
+     <p id="dpNota" class="text-[11px] text-muted-foreground mt-4"></p>
+    </section>
 
-// Grupos: remove o nome do lançamento antes do " - " (ex.: "O Resgate da Prosperidade - VIP #3" vira "VIP #3")
-const porGrupo = {};
-for (const g of grupos) {
-  const bruto = txt(g['Grupo']);
-  const nome = bruto.includes(' - ') ? bruto.split(' - ').pop().trim() : bruto;
-  if (nome) porGrupo[nome] = (porGrupo[nome] || 0) + 1;
-}
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-users"/></svg>Por público</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Alunos, Não Alunos e Checkout</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Resultado somado de todos os disparos de cada público, em todas as fases.</p>
+     <div id="dpPublico" class="grid grid-cols-1 gap-4 mt-5"></div>
+    </section>
 
-// Base de aquisição: % de cada cluster de alunos que já entrou como lead.
-// Prefere o nó "Resumo Aquisição" (4 linhas prontas na planilha). Se ele não
-// existir, cai para o "Base Aquisição" cru — que são ~40 mil linhas e é o que
-// mais pesa na cota de leitura do Google Sheets.
-let alunos_base = null;
-const CL = [['Aluno 7D','Aluno 7d'],['Aluno 14D','Aluno 14d'],['Aluno 30D','Aluno 30d'],['Aluno Antigo','Aluno antigo']];
-const resumo = noh('Resumo Aquisição');
-if (resumo) {
-  alunos_base = {};
-  const mr = mapearColunas(resumo, { cluster:['cluster','clusters','segmento','nome'],
-    total:['total','base total','quantidade','base'], captados:['captados','captado','ja captados'],
-    de:['de','data inicial','inicio'], ate:['ate','data final','fim'] });
-  for (const r of resumo) {
-    const k = txt(r[mr.cluster]); if (!k) continue;
-    const nome = (CL.find(([, n]) => slug(n) === slug(k)) || [null, k])[1];
-    alunos_base[nome] = {
-      total:    Math.round(num(r[mr.total])),
-      captados: Math.round(num(r[mr.captados])),
-      de:       toISO(r[mr.de]),
-      ate:      toISO(r[mr.ate]),
-    };
-  }
-  if (!Object.keys(alunos_base).length) alunos_base = null;
-}
-if (!alunos_base) {
-  const aq = noh('Base Aquisição');
-  if (aq) {
-    alunos_base = {};
-    for (const r of aq) {
-      const cl = CL.find(([col]) => um(r[col]));
-      if (!cl) continue;
-      const k = cl[1], dia = toISO(r['Data Certa']);
-      const b = alunos_base[k] || (alunos_base[k] = { total: 0, captados: 0, de: null, ate: null });
-      b.total++;
-      if (um(r['lead']) || um(r['lead tel'])) b.captados++;
-      if (dia) { if (!b.de || dia < b.de) b.de = dia; if (!b.ate || dia > b.ate) b.ate = dia; }
-    }
-  }
-}
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Direto x Resgate</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Comparativo de Comunicação</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Só compara dentro do mesmo público. As quatro primeiras colunas são o Direto FDS; as seguintes, o Resgate da Prosperidade.</p>
+     <div class="overflow-x-auto mt-5"><table id="dpComunicacao" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
 
-// =====================================================================
-//  VENDAS  —  Assiny + Hotmart + TMB + Aplicações, cruzados com os leads
-//  Nós do n8n que precisam existir antes deste Code (Google Sheets):
-//    "Base Assiny"    -> aba  BASE DE TRANSAÇÃO 💲
-//    "Base Hotmart"   -> aba  BASE DE TRANSAÇÃO HOTMART 💲
-//    "Base TMB"       -> aba  BASE DE TRANSAÇÃO TMB 💲
-//    "Aplicações"     -> aba  Aplicações
-//  Se algum nó não existir, o bloco é ignorado e o painel segue funcionando.
-// =====================================================================
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Ranking</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">CPL por Disparo</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Do mais barato ao mais caro. Verde até R$ 5, âmbar até R$ 10, vermelho acima.</p>
+     <div id="dpBarras" class="flex flex-col gap-2.5 mt-5"></div>
+    </section>
 
-// =====================================================================
-//  VENDAS — Assiny + Hotmart + TMB + Aplicações, cruzados com os leads
-//  Nós do n8n necessários (Google Sheets, com "Execute Once" LIGADO):
-//    "Base Assiny"  "Base Hotmart"  "Base TMB"  "Aplicações"
-//  Sem algum deles, o bloco correspondente é ignorado e o painel avisa.
-// =====================================================================
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Sem cadastro</span>
+     <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Outros utm_content Capturados</h2>
+     <p class="text-[13px] text-muted-foreground mt-1">Os 20 maiores conteúdos que apareceram na base e ainda não estão na lista de disparos. Acrescente em DISPAROS para ver custo e CPL.</p>
+     <div class="overflow-x-auto mt-5"><table id="dpOutros" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
+    </div>
 
-const VERSAO_CODE = 'n8n v13';
-// ---- CONFIGURAÇÃO -----------------------------------------------------
-const INICIO_CAMPANHA = '2026-10-06';   // corta boletos TMB de campanhas antigas
-const COL = {
-  assiny: {
-    email:   ['user_email','email','e-mail'],
-    status:  ['status'],
-    valor:   ['Valor R$','valor r','valor'],
-    taxa:    ['taxa'],                       // vem ×100 na planilha: dividir por 100
-    data:    ['Pago em','pago em','data de pagamento','data do pagamento','data de aprovacao','paid at','data da transacao','data','created at'],
-    pagto:   ['tipo de pagamento','forma de pagamento','metodo de pagamento','payment method'],
-    utm:     ['utm_source','utm source','origem'],
-    vendedor:['consultor','vendedor','closer','responsavel','atendente'],
+    <div id="v-meta" hidden>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-9">
+     <div class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-target"/></svg>Meta de leads</div>
+      <div id="mtLeads" class="text-[32px] font-bold text-blue-600 mt-2 tabnum"></div>
+      <div class="h-1.5 rounded-full bg-white border border-blue-100 overflow-hidden mt-2"><i id="mtLeadsBar" class="block h-full bg-blue-500"></i></div>
+      <div id="mtLeadsSub" class="text-[9.5px] text-blue-500 mt-1.5"></div>
+     </div>
+     <div class="rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Faturamento projetado</div>
+      <div id="mtFat" class="text-[26px] font-bold text-indigo-600 mt-2 tabnum"></div>
+      <div id="mtFatSub" class="text-[9.5px] text-indigo-400 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Resultado real projetado</div>
+      <div id="mtReal" class="text-[26px] font-bold text-emerald-600 mt-2 tabnum"></div>
+      <div id="mtRealSub" class="text-[9.5px] text-emerald-600 mt-1"></div>
+     </div>
+     <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[154px]">
+      <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Funil comercial</div>
+      <div id="mtFunFat" class="text-[26px] font-bold text-amber-600 mt-2 tabnum"></div>
+      <div id="mtFunSub" class="text-[9.5px] text-amber-600/80 mt-1"></div>
+     </div>
+    </div>
+
+    <section class="rounded-xl border bg-white px-7 py-7 mt-10">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Premissas de captação</span>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Meta por Cluster</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Quanto de cada base a premissa pede para captar, e quanto já entrou nesta campanha.</p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Ritmo necessário</div>
+       <div class="mt-1"><span id="mtRitmo" class="text-[21px] font-bold text-zinc-900 tabnum"></span> <span class="text-[12px] text-muted-foreground">/dia</span></div>
+       <div id="mtRitmoSub" class="text-[10px] text-zinc-500 mt-0.5"></div></div>
+     </div>
+     <div class="overflow-x-auto mt-5"><table id="mtCluster" class="w-full text-[12.5px] tabnum"></table></div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-6">
+     <section class="rounded-xl border bg-white px-7 py-7 min-w-0">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Campanhas anteriores</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Projeção por Canal e Cluster</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Matriz montada com o histórico de leads, compradores e ticket das campanhas anteriores.</p>
+      <div id="mtTabs" class="flex flex-wrap gap-1.5 mt-5"></div>
+      <div class="overflow-x-auto mt-4"><table id="mtMatriz" class="w-full text-[12px] tabnum"></table></div>
+     </section>
+     <section class="rounded-xl border bg-white px-7 py-7">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Resultado</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Projeção de Resultado</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Faturamento projetado menos custos e impostos.</p>
+      <div id="mtDre" class="mt-5 flex flex-col"></div>
+     </section>
+    </div>
+
+    <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+     <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Link de aplicação</span>
+       <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Funil Comercial</h2>
+       <p id="mtFunDesc" class="text-[13px] text-muted-foreground mt-1"></p>
+      </div>
+      <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Margem projetada</div>
+       <div class="mt-1"><span id="mtMargem" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div></div>
+     </div>
+     <div id="mtFunil" class="flex flex-col gap-2.5 mt-6"></div>
+     <div id="mtFunFin" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6"></div>
+    </section>
+    </div>
+
+    <div id="v-vendas" hidden>
+     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-target"/></svg>Faturamento geral</div>
+       <div id="vnGer" class="text-[26px] font-bold text-amber-600 mt-2 tabnum"></div>
+       <div id="vnGerSub" class="text-[9.5px] text-amber-700/80 mt-1 leading-relaxed"></div>
+      </div>
+      <div class="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Cash collected</div>
+       <div id="vnCash" class="text-[26px] font-bold text-emerald-600 mt-2 tabnum"></div>
+       <div id="vnCashSub" class="text-[9.5px] text-emerald-700/80 mt-1 leading-relaxed"></div>
+      </div>
+      <div class="rounded-lg border bg-white p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Faturamento líquido</div>
+       <div id="vnLiq" class="text-[26px] font-bold text-zinc-900 mt-2 tabnum"></div>
+       <div id="vnLiqSub" class="text-[9.5px] text-muted-foreground mt-1 leading-relaxed"></div>
+      </div>
+      <div class="rounded-lg border bg-white p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Conversão</div>
+       <div id="vnConv" class="text-[26px] font-bold text-zinc-900 mt-2 tabnum"></div>
+       <div id="vnConvSub" class="text-[9.5px] text-muted-foreground mt-1 leading-relaxed"></div>
+      </div>
+     </div>
+
+     <div id="vnStats" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4"></div>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+       <div>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-target"/></svg>Pacing contra a meta</span>
+        <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Estamos no ritmo?</h2>
+        <p id="vnPaceSub" class="text-[13px] text-muted-foreground mt-1"></p>
+       </div>
+       <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Dias restantes</div>
+        <div class="mt-1"><span id="vnPaceDias" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
+      </div>
+      <div id="vnPaceCards" class="grid md:grid-cols-3 gap-4 mt-6"></div>
+      <div id="vnPaceCharts" class="mt-9 flex flex-col gap-9"></div>
+     </section>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+       <div>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Linha do tempo</span>
+        <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Vendas e faturamento por dia</h2>
+        <p id="vnChartSub" class="text-[13px] text-muted-foreground mt-1"></p>
+       </div>
+       <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Melhor dia</div>
+        <div class="mt-1"><span id="vnBest" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div></div>
+      </div>
+      <div id="vnChart" class="overflow-x-auto mt-6"></div>
+      <div id="vnChartAviso"></div>
+     </section>
+
+     <div class="grid lg:grid-cols-2 gap-6 mt-6">
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>Origem da venda</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">AwSales x Comercial</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Separado pelo utm_source da transação.</p>
+       <div id="vnOrig" class="mt-5"></div>
+      </section>
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-cart"/></svg>Checkout</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Forma de pagamento</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Cartão, PIX e boleto em número de vendas e em caixa.</p>
+       <div id="vnPagBar" class="flex h-2.5 rounded-full overflow-hidden bg-zinc-100 mt-5"></div>
+       <div class="overflow-x-auto mt-4"><table class="w-full text-[12px]"><tbody id="vnPag"></tbody></table></div>
+      </section>
+     </div>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Cruzamento com a base de leads</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Conversão por cluster</h2>
+      <p id="vnClusSub" class="text-[13px] text-muted-foreground mt-1"></p>
+      <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnClus"></tbody></table></div>
+     </section>
+
+     <div class="grid lg:grid-cols-2 gap-6 mt-6">
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-magnet"/></svg>utm_source da inscrição</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Conversão por canal</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Por onde o lead que comprou entrou na captação.</p>
+       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnCanal"></tbody></table></div>
+      </section>
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-cart"/></svg>Checkout</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Por plataforma</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Bruto, taxas e o que ainda falta receber.</p>
+       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPlat"></tbody></table></div>
+      </section>
+     </div>
+
+    </div>
+
+    <p id="note" class="text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed"></p>
+   </div>
+  </main>
+ </div>
+</div>
+
+<script>
+// ===== CONFIGURAÇÃO =====
+const VERSAO = 'painel v13';
+const WEBHOOK_URL = 'https://n8n.pauloaguiarx.com.br/webhook/painel-captacao';
+const ATUALIZAR_A_CADA_MIN = 15;   // minutos entre revalidações (cache local evita leituras repetidas)
+// Imagem de cada canal (utm_source). Pode ser o site da ferramenta (vira o ícone dela)
+// ou uma imagem: link completo (https://...) ou o nome de um arquivo enviado ao repositório (ex.: 'awsales.png').
+// Canal sem imagem mostra as iniciais.
+const CANAL_IMAGENS = {
+  'whatsapp': 'sendflow.png',
+  'instagram': 'instagram.png',
+  'youtube': 'youtube.png',
+  'tiktok': 'tiktok.png',
+  'activecampaign': 'activecampaign.png',
+  'email': 'activecampaign.png',
+  'meta': 'meta.png',
+  'awsales': 'awsales.png',
+  'sendflow': 'sendflow.png',
+  'yay-form': 'yayforms.png',
+  'area-de-membros': 'cademi.png',
+  'sem utm': 'sem-utm.png',
+};
+// Canais que devem aparecer juntos no painel: 'utm_source da planilha': 'nome que aparece'
+const CANAL_JUNTAR = {
+  'whatsapp': 'sendflow',
+  'activecampaign': 'email',
+};
+// Selo de cada cluster de aluno (arquivo enviado ao repositório)
+const CLUSTER_IMAGENS = {
+  'Aluno 7d': 'aluno-7d.png',
+  'Aluno 14d': 'aluno-14d.png',
+  'Aluno 30d': 'aluno-30d.png',
+  'Aluno antigo': 'aluno-antigo.png',
+  'Não aluno': 'nao-aluno.png',
+};
+// ===== DISPAROS (AwSales) — acrescente uma linha por disparo =====
+// 'utm' é o utm_content que identifica o disparo na base de leads.
+const FASES = {
+  F1: { nome:'Fase 1 · Teste de copy',        base:'Base de lançamentos (Ascensão + W01 a W07)' },
+  F2: { nome:'Fase 2 · Direto x Resgate',     base:'Base de lançamentos (Ascensão + W01 a W07)' },
+  F3: { nome:'Fase 3 · Escala por recência',  base:'Base de lançamentos (Ascensão + W01 a W07)' },
+  F4: { nome:'Fase 4 · Eventos de checkout',  base:'Carrinho abandonado, cartão recusado e PIX não pago' },
+  F5: { nome:'Fase 5 · Alunos por cluster',   base:'Alunos EQJC ainda não disparados' },
+};
+const DISPAROS = [
+  // utm = utm_content exato do link (F1..F5 com número, não com a letra i).
+  { fase:'F1', utm:'F1-ALU-T1',     nome:'Alunos com score, 90+ dias',            publico:'Alunos',     com:'Direto Copy 01', data:'2026-09-30', hora:'20:30', base:1000,  entregues:963,   custo:173.34,  responsavel:'Luizin' },
+  { fase:'F1', utm:'F1-ALU-T2',     nome:'Alunos com score, 90+ dias',            publico:'Alunos',     com:'Direto Copy 02', data:'2026-09-30', hora:'20:30', base:1000,  entregues:955,   custo:171.90,  responsavel:'Luizin' },
+  { fase:'F1', utm:'F1-NAL-T1',     nome:'Não alunos com score, 30+ dias',        publico:'Não alunos', com:'Direto Copy 01', data:'2026-09-30', hora:'20:30', base:1000,  entregues:965,   custo:173.70,  responsavel:'Luizin' },
+  { fase:'F1', utm:'F1-NAL-T2',     nome:'Não alunos com score, 30+ dias',        publico:'Não alunos', com:'Direto Copy 02', data:'2026-09-30', hora:'20:30', base:1000,  entregues:970,   custo:174.60,  responsavel:'Luizin' },
+  { fase:'F2', utm:'F2-ALU-RES',    nome:'Alunos com score, até 90 dias',         publico:'Alunos',     com:'Resgate',        data:'2026-10-01', hora:'19:00', base:1000,  entregues:980,   custo:176.40,  responsavel:'Luizin' },
+  { fase:'F2', utm:'F2-ALU-DIR',    nome:'Alunos com score, até 90 dias',         publico:'Alunos',     com:'Direto Copy 02', data:'2026-10-01', hora:'19:00', base:1000,  entregues:978,   custo:176.04,  responsavel:'Luizin' },
+  { fase:'F2', utm:'F2-NAL-RES',    nome:'Não alunos sem score',                  publico:'Não alunos', com:'Resgate',        data:'2026-10-01', hora:'19:00', base:1000,  entregues:882,   custo:158.76,  responsavel:'Luizin' },
+  { fase:'F2', utm:'F2-NAL-DIR',    nome:'Não alunos sem score',                  publico:'Não alunos', com:'Direto Copy 02', data:'2026-10-01', hora:'19:00', base:1000,  entregues:877,   custo:157.86,  responsavel:'Luizin' },
+  { fase:'F2', utm:'F2-NAL-ESC',    nome:'Não alunos com score (escala)',         publico:'Não alunos', com:'Direto Copy 02', data:'2026-10-01', hora:'19:00', base:6339,  entregues:6057,  custo:1090.26, responsavel:'Luizin' },
+  { fase:'F3', utm:'F3-L1-ALU-DIR', nome:'L1 · Alunos com score, até 90 dias',    publico:'Alunos',     com:'Direto Copy 02', data:'2026-10-02', hora:'17:00', base:8969,  entregues:8704,  custo:1566.72, responsavel:'Luizin' },
+  { fase:'F3', utm:'F3-L2-NAL-RES', nome:'L2 · Não alunos sem score, até 90 dias',publico:'Não alunos', com:'Resgate',        data:'2026-10-02', hora:'17:00', base:4598,  entregues:4254,  custo:765.72,  responsavel:'Luizin' },
+  { fase:'F3', utm:'F3-L3-NAL-RES', nome:'L3 · Não alunos sem score, 90+ dias',   publico:'Não alunos', com:'Resgate',        data:'2026-10-02', hora:'17:00', base:38083, entregues:33358, custo:6004.44, responsavel:'Luizin' },
+  { fase:'F3', utm:'F3-L4-ALU-DIR', nome:'L4 · Alunos sem score, até 90 dias',    publico:'Alunos',     com:'Direto Copy 02', data:'2026-10-02', hora:'17:00', base:1762,  entregues:1706,  custo:307.08,  responsavel:'Luizin' },
+  { fase:'F3', utm:'F3-L5-ALU-DIR', nome:'L5 · Alunos com score, 90+ dias',       publico:'Alunos',     com:'Direto Copy 02', data:'2026-10-02', hora:'17:00', base:2587,  entregues:2486,  custo:447.48,  responsavel:'Luizin' },
+  { fase:'F3', utm:'F3-L6-ALU-DIR', nome:'L6 · Alunos sem score, 90+ dias',       publico:'Alunos',     com:'Direto Copy 02', data:'2026-10-02', hora:'17:00', base:5860,  entregues:5782,  custo:1040.76, responsavel:'Luizin' },
+  { fase:'F4', utm:'F4-CHK-30',     nome:'Checkout até 30 dias',                  publico:'Checkout',   com:'Convite',        data:'2026-10-03', hora:'13:00', base:2802,  entregues:2802,  custo:504.36,  responsavel:'Luizin' },
+  { fase:'F4', utm:'F4-CHK-90',     nome:'Checkout de 31 a 90 dias',              publico:'Checkout',   com:'Convite',        data:'2026-10-03', hora:'13:00', base:5375,  entregues:5375,  custo:967.50,  responsavel:'Luizin' },
+  { fase:'F4', utm:'F4-CHK-ANT',    nome:'Checkout há mais de 90 dias',           publico:'Checkout',   com:'Convite',        data:'2026-10-03', hora:'13:00', base:8540,  entregues:8540,  custo:1537.20, responsavel:'Luizin' },
+  { fase:'F5', utm:'F5-ALU-7-14',   nome:'Compra de 7 a 14 dias antes',           publico:'Alunos',     com:'Resgate',        data:'2026-10-03', hora:'13:00', base:312,   entregues:312,   custo:56.16,   responsavel:'Luizin' },
+  { fase:'F5', utm:'F5-ALU-15-30',  nome:'Compra de 15 a 30 dias antes',          publico:'Alunos',     com:'Resgate',        data:'2026-10-03', hora:'13:00', base:1980,  entregues:1980,  custo:356.40,  responsavel:'Luizin' },
+  { fase:'F5', utm:'F5-ALU-30+',    nome:'Compra há mais de 30 dias',             publico:'Alunos',     com:'Resgate',        data:'2026-10-03', hora:'13:00', base:7258,  entregues:7258,  custo:1306.44, responsavel:'Luizin' },
+];
+// ===== META DA CAMPANHA (atualize a cada lançamento, copiando da planilha de metas) =====
+const META = {
+  campanha: 'W09',
+  data_evento: '2026-10-06',
+  inicio_captacao: '',          // opcional, ex.: '2026-09-29'. Vazio = primeiro dia com inscrições
+  // Premissas por cluster: base = QUANTIDADE, taxa = Média, leads = SEGUINDO PREMISSAS
+  premissas: {
+    'Aluno 7d':     { base: 1330,  taxa: 0.70, leads: 931 },
+    'Aluno 14d':    { base: 1330,  taxa: 0.70, leads: 931 },
+    'Aluno 30d':    { base: 3323,  taxa: 0.30, leads: 997 },
+    'Aluno antigo': { base: 34942, taxa: 0.07, leads: 2446 },
+    'Não aluno':    { base: 25000, taxa: 0.15, leads: 3750 },
   },
-  hotmart: {
-    email:   ['Email','email','e-mail','email do cliente'],
-    status:  ['Status','status','situacao'],
-    valor:   ['Valor R$','valor r','valor'],
-    recebido:['Valor Recebido R$','valor recebido r','valor recebido'],
-    data:    ['Pago em','pago em','data de pagamento','data do pagamento','data de aprovacao','data de confirmacao','data da transacao','data'],
-    pagto:   ['tipo de pagamento','forma de pagamento','metodo de pagamento'],
-    utm:     ['utm_source','utm source','origem'],
-    vendedor:['consultor','vendedor','closer','responsavel'],
+  // Matriz "Projeção - Geral": nome do canal na planilha de metas -> utm_source no painel
+  canais: { 'yay-form':'yay-form', 'email':'email', 'whatsapp':'sendflow', 'awsales':'awsales', 'area-de-membros':'area-de-membros', 'instagram':'instagram', 'youtube':'youtube' },
+  // Cada linha segue a ordem dos canais acima; o último número é a coluna "Somado Canais"
+  matriz: {
+    leads: {
+      'Aluno 7d':     [313, 23, 94, 136, 361, 3, 1, 931],
+      'Aluno 14d':    [277, 39, 209, 122, 283, 0, 1, 931],
+      'Aluno 30d':    [113, 66, 327, 229, 258, 2, 2, 997],
+      'Aluno antigo': [92, 192, 714, 1090, 336, 8, 14, 2446],
+      'Não aluno':    [109, 299, 1515, 1043, 270, 386, 129, 3750],
+      'Total':        [904, 620, 2858, 2620, 1506, 400, 146, 9055],
+    },
+    compradores: {
+      'Aluno 7d':     [17, 2, 9, 6, 22, 0, 0, 57],
+      'Aluno 14d':    [16, 3, 20, 5, 17, 0, 0, 61],
+      'Aluno 30d':    [6, 5, 22, 8, 14, 0, 0, 56],
+      'Aluno antigo': [2, 5, 27, 20, 9, 0, 1, 64],
+      'Não aluno':    [2, 4, 25, 15, 4, 2, 1, 54],
+      'Total':        [43, 20, 103, 54, 66, 2, 2, 291],
+    },
+    faturamento: {
+      'Aluno 7d':     [30330.24, 3038.17, 13436.52, 12627.55, 24768.92, 0, 0, 85389.75],
+      'Aluno 14d':    [14919.84, 7254.38, 28216.12, 7419.53, 31530.61, 0, 477.96, 90415.16],
+      'Aluno 30d':    [8967.80, 11230.71, 24654.18, 19293.70, 16902.26, 0.43, 0, 73408.63],
+      'Aluno antigo': [7061.26, 14096.94, 44800.49, 31624.60, 8446.63, 0, 0, 114777.39],
+      'Não aluno':    [4742.40, 834.31, 37377.31, 16916.21, 4190.86, 2393.47, 873.05, 60635.87],
+      'Total':        [66021.54, 36454.51, 148484.61, 87881.59, 85839.28, 2393.93, 1151.01, 424626.80],
+    },
+    tmf: {
+      'Aluno 7d':     [1793.43, 1522.80, 1437.58, 2057.69, 1112.57, 0, 0, 1507.18],
+      'Aluno 14d':    [944.25, 2154.02, 1432.51, 1581.52, 1843.45, 0, 2388.26, 1485.60],
+      'Aluno 30d':    [1485.53, 2160.21, 1103.14, 2295.87, 1248.58, 199.02, 0, 1322.02],
+      'Aluno antigo': [2964.02, 2569.02, 1689.06, 1614.52, 928.77, 0, 0, 1800.51],
+      'Não aluno':    [2042.35, 199.02, 1484.68, 1120.69, 1024.73, 1089.42, 659.85, 1121.00],
+      'Total':        [1465.73, 1907.67, 1378.51, 1821.25, 1375.41, 866.82, 906.77, 1454.90],
+    },
   },
-  tmb: {
-    email:   ['Cliente E-mail','cliente e mail','cliente email','email','e-mail'],
-    parcela: ['Parcela','parcela','n parcela','numero da parcela'],
-    pedido:  ['Pedido','pedido','id do pedido','numero do pedido'],
-    entrada: ['Valor da Parcela (R$)','valor da parcela r','valor da parcela'],
-    ticket:  ['Ticket','ticket','valor total','ticket contratado'],
-    data:    ['Pago em','pago em','Data de Pagamento','data do pagamento','data de pagamento','Data de Efetivacao','data de efetivacao','data efetivacao','efetivado em','data'],
-    utm:     ['utm_source','utm source','origem'],
-    vendedor:['consultor','vendedor','closer','responsavel'],
+  // Resultado
+  faturamento_strack: 59520.94,   // Faturamento S/track
+  taxas_pct: 0.12,                // Taxas (sobre o faturamento)
+  disparos: 30000,                // Disparos + Aw Sales
+  sms_ligacao: 2500,              // SMS Flash + Ligação
+  imposto_pct: 0.11,              // Imposto (sobre o faturamento)
+  // Funil comercial
+  funil: {
+    leads_real: 9279,             // leads AFERIDOS no fechamento. 0 ou null = usa o que vem da planilha
+    showup_pct: 0.50,             // show-up projetado sobre leads
+    showup_real: 4326,            // show-up AFERIDO (leads ao vivo). 0 ou null = só projeção
+    aplic_dia1_real: 926,         // aplicações ÚNICAS do 1º dia (aferido). 0 ou null = só projeção
+    aplic_dia1_pct: 0.22,         // aplicações no 1º dia sobre show-up
+    aplic_pct: 0.61,              // aplicações totais sobre show-up
+    vendas_lead_pct: 0.039,       // vendas sobre leads (era 0.05 na projeção inicial)
+    cartao_pct: 0.55,             // parte das vendas no cartão (o resto é boleto)
+    ticket_cartao: 2707.94,
+    ticket_boleto: 249.71,        // ENTRADA do boleto (é o que entra em caixa)
+    ticket_nominal: 2388.27,      // contrato cheio do boleto/TMB (usado no faturamento nominal)
+    margem_pct: 0.60,
   },
-  aplic: {
-    email:   ['Email','email','e-mail'],
-    telefone:['Telefone','telefone','celular','whatsapp','numero de telefone'],
-    data:    ['Enviado em','enviado em','data e hora','carimbo de data hora','data de envio','data da aplicacao','submitted at','timestamp','Data','data','created at'],
-    prio:    ['Prioridade','prioridade','resposta','decisao','interesse'],
-    completa:['Completa','completa','finalizada','concluida','status'],
+  // Janela de vendas, usada no pacing da aba Vendas.
+  // inicio vazio = primeiro dia com venda registrada.
+  periodo_vendas: { inicio: '', fim: '2026-10-12' },
+  // Como a meta se distribui ao longo da janela. Lançamento não é linear:
+  // estoura no 1º dia e vai caindo todo dia, sem repique no fim.
+  //   d1 = fatia do total no 1º dia
+  //   decaimento = quanto cada dia vale em relação ao anterior (0.5 = metade)
+  // Com d1 0,62 e decaimento 0,5 numa janela de 7 dias, sai:
+  //   62% · 19% · 10% · 5% · 2% · 1% · 0,6%
+  // Referência: nas campanhas W04–W08 o 1º dia valeu de 19% a 67% do total,
+  // mediana 54%. O decaimento dos dias seguintes é premissa, ajuste à vontade.
+  curva_meta: {
+    vendas: { d1: 0.62 },
+    cash:   { d1: 0.62 },
+    aplic:  { d1: 0.72 },   // aplicação concentra ainda mais no dia da live
+    decaimento: 0.5,
   },
 };
-// Status que contam como venda, por plataforma (comparação exata, sem acento e minúsculo)
-const STATUS_OK = { assiny: ['paid'], hotmart: ['aprovado'] };
-// -----------------------------------------------------------------------
-
-// PASSO 2 — parsing BR. "R$ 1.234,56" -> 1234.56
-// Ordem: tira R$ e espaços; tira TODOS os pontos (milhar); vírgula vira ponto.
-function brNum(v){
-  if (typeof v === 'number') return v;
-  let s = String(v ?? '').trim();
-  if (!s) return 0;
-  const neg = /^\(.*\)$/.test(s) || s.startsWith('-');
-  s = s.replace(/r\$/ig,'').replace(/\s/g,'').replace(/[()]/g,'');
-  s = s.replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,'');
-  const n = parseFloat(s);
-  if (!isFinite(n)) return 0;
-  return neg && n > 0 ? -n : n;
+// =========================
+const EMBED = null;
+let DATA, C, rows, CD, rowsDisp = [], canais = [];
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('pt-BR');
+const pctN = (a,b) => b ? a/b*100 : 0;
+const pct = (a,b,d=1) => b ? pctN(a,b).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%' : '–';
+const SEGS = ['Aluno 7d','Aluno 14d','Aluno 30d','Aluno antigo','Não aluno'];
+const FXS = ['A','B','C','D','E','F','Sem score'];
+const sum = (rs,k) => rs.reduce((s,r)=>s+r[C[k]],0);
+const txtU = v => { const t = String(v ?? '').trim(); return t && t !== '—' ? t : '—'; };
+const ddmm = d => `${d.slice(8)}/${d.slice(5,7)}`;
+const dm = d => `${+d.slice(8)}/${+d.slice(5,7)}`;
+const opts = (sel, vals, all) => { const cur = sel.value; sel.innerHTML = `<option value="">${all}</option>` + vals.map(v=>`<option>${v}</option>`).join(''); sel.value = cur; };
+function load(data){
+  DATA = data; C = DATA.cols.reduce((o,c,i)=>(o[c]=i,o),{});
+  rows = DATA.rows.map(r=>{ const j = CANAL_JUNTAR[r[C.canal]]; if(!j) return r; const x = r.slice(); x[C.canal] = j; return x; });
+  $('camp').textContent = DATA.campanha;
+  CD = (DATA.cols_disp||[]).reduce((o,c,i)=>(o[c]=i,o),{});
+  rowsDisp = (DATA.rows_disp||[]).map(r=>{ const j = CANAL_JUNTAR[r[CD.canal]]; if(!j) return r; const x = r.slice(); x[CD.canal] = j; return x; });
+  canais = [...new Set(rows.map(r=>r[C.canal]))];
+  canais.sort((a,b)=>sum(rows.filter(r=>r[C.canal]===b),'l')-sum(rows.filter(r=>r[C.canal]===a),'l'));
+  opts($('fCanal'), canais, 'Todos os canais');
 }
-const mail = v => String(v ?? '').trim().toLowerCase();
-const DIAG = {};
+const VIEWS = {
+  captacao:{t:'Análise de Captação', s:'Visão consolidada de leads, alunos, score da pesquisa e grupos da SendFlow (planilha de debriefing).'},
+  composicao:{t:'Composição da Base', s:'Quanto da captação é público novo, quanto veio de outras captações e quantos já compraram o FDS.'},
+  disparos:{t:'Análise de Disparos', s:'Resultado de cada disparo da AwSales: leads, taxa de conversão e custo por lead.'},
+  meta:{t:'Meta da Campanha', s:'Projeção pelas campanhas anteriores e pelo funil comercial, com o realizado desta captação.'},
+  vendas:{t:'Relatório de Vendas', s:'Faturamento das três plataformas, aplicações e conversão cruzada com a base de leads.'}
+};
+let view = 'captacao';
+function route(){
+  view = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'captacao';
+  for(const v in VIEWS) $('v-'+v).hidden = v!==view;
+  $('vTitle').textContent = VIEWS[view].t; $('vSub').textContent = VIEWS[view].s;
+  $('filters').style.visibility = (view==='meta'||view==='disparos'||view==='vendas') ? 'hidden' : '';
+  document.querySelectorAll('#nav a').forEach(a=>{ const on=a.dataset.v===view;
+    a.className='flex items-center gap-2.5 px-2 py-2 rounded-md '+(on?'bg-accent text-zinc-900 font-medium':'hover:bg-accent'); });
+  render();
+}
+window.addEventListener('hashchange', route);
+opts($('fSeg'), ['Todos os alunos', ...SEGS], 'Todos os perfis');
+opts($('fFaixa'), FXS.map(f=>f==='Sem score'?f:'Faixa '+f), 'Todas as faixas');
+try{ const m=localStorage.getItem('metaLeads'); if(m) $('meta').value=m; }catch(e){}
 
-// ---- índice da base de leads (e-mail e telefone -> cluster + canal)
-const porEmail = {}, porFone = {};
-for (const r of leads){
-  const em = mail(r['Email']), tl = fone(r['Número de telefone']);
-  const seg = um(r['Aluno 7D']) ? 'Aluno 7d' : um(r['Aluno 14D']) ? 'Aluno 14d' :
-              um(r['Aluno 30D']) ? 'Aluno 30d' : um(r['Aluno Antigo']) ? 'Aluno antigo' : 'Não aluno';
-  const ref = { cluster: seg, canal: (txt(r['*utm_source']) || 'sem utm').toLowerCase() };
-  if (em && !porEmail[em]) porEmail[em] = ref;
-  if (tl && !porFone[tl]) porFone[tl] = ref;
+let state = {};
+const read = () => ({canal:$('fCanal').value, seg:$('fSeg').value, faixa:$('fFaixa').value.replace('Faixa ',''), meta:+$('meta').value||0});
+function markDirty(){ const s=read(); const dirty = JSON.stringify(s)!==JSON.stringify(state);
+  $('apply').className = 'text-[12px] font-semibold text-white px-4 py-2 rounded-lg transition-colors ' + (dirty ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-indigo-300'); }
+['fCanal','fSeg','fFaixa','meta'].forEach(id=>$(id).addEventListener('input',markDirty));
+$('meta').addEventListener('keydown',e=>{ if(e.key==='Enter') apply(); });
+$('apply').onclick = apply;
+function apply(){ state = read(); try{ localStorage.setItem('metaLeads', state.meta||''); }catch(e){} render(); markDirty(); }
+
+function filtered(skipCanal){
+  const {canal,seg,faixa} = state;
+  return rows.filter(r=>(skipCanal||!canal||r[C.canal]===canal)
+    && (!seg || (seg==='Todos os alunos' ? r[C.seg]!=='Não aluno' : r[C.seg]===seg))
+    && (!faixa || r[C.faixa]===faixa));
 }
 
-// ---- Aplicações
-function lePrio(v){
-  const s = slug(v);
-  if (!s) return '—';
-  if (/\bp1\b/.test(s) || s.includes('ja decidi') || s.includes('garantir minha vaga')) return 'P1';
-  if (/\bp2\b/.test(s) || s.includes('duvida')) return 'P2';
-  if (/\bp3\b/.test(s) || s.includes('nao tenho condicao') || s.includes('sem condicao')) return 'P3';
-  return '—';
+function render(){
+  if(!rows){ $('note').className='text-[12px] text-zinc-500 mt-8'; $('note').textContent='Carregando os dados da planilha… isso leva alguns segundos.'; return; } if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); if(view==='disparos') renderDisp(); if(view==='vendas') renderVen(); }
+function renderCap(){
+  const rs = filtered(false), L = sum(rs,'l');
+  const na = sum(rs.filter(r=>r[C.seg]==='Não aluno'),'l'), al = L-na, gr = sum(rs,'g');
+  const dias = [...new Set(rows.map(r=>r[C.dia]))].sort();
+  $('kLeads').textContent = fmt(L);
+  $('kLeadsSub').textContent = `Inscrições de ${ddmm(dias[0])} a ${ddmm(dias.at(-1))}`;
+  $('kNa').textContent = pct(na,L,0); $('kNaN').textContent = fmt(na)+' leads';
+  $('kAl').textContent = pct(al,L,0); $('kAlN').textContent = fmt(al)+' leads';
+  const Ltot = sum(rows,'l'), temFiltro = !!(state.canal||state.seg||state.faixa);
+  $('kGr').textContent = pct(DATA.grupos_total, Ltot);
+  $('kGrSub').textContent = `${fmt(DATA.grupos_total)} membros na SendFlow para ${fmt(Ltot)} leads` + (temFiltro ? ' (não muda com filtros)' : '');
+  $('pillGrp').textContent = `${fmt(DATA.grupos_total)} membros nos grupos`;
+  const semScore = sum(rs.filter(r=>r[C.faixa]==='Sem score'),'l'), resp = L - semScore;
+  $('kResp').textContent = pct(resp,L);
+  $('kRespSub').textContent = `${fmt(resp)} de ${fmt(L)} leads responderam · ${fmt(semScore)} sem resposta`;
+  const fxC = {A:'#10b981',B:'#34d399',C:'#6366f1',D:'#818cf8',E:'#fb8c45',F:'#a1a1aa'};
+  const fv = ['A','B','C','D','E','F'].map(f=>[f,sum(rs.filter(r=>r[C.faixa]===f),'l')]), fm = Math.max(...fv.map(x=>x[1]),1);
+  $('bFx').innerHTML = fv.map(([f,n])=>`<div class="grid grid-cols-[70px_1fr_120px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">Faixa ${f}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${n/fm*100}%;background:${fxC[f]}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${pct(n,resp)}</b> <span class="text-zinc-400">${fmt(n)} leads</span></span></div>`).join('');
+  $('fxAB').textContent = pct(fv[0][1]+fv[1][1], resp);
+
+  // ---- timeline
+  const byDay = dias.map(d=>rs.filter(r=>r[C.dia]===d));
+  const dL = byDay.map(x=>sum(x,'l')), dG = byDay.map(x=>sum(x,'g'));
+  const cum=[], cumG=[]; dL.reduce((a,v,i)=>(cum[i]=a+v),0); dG.reduce((a,v,i)=>(cumG[i]=a+v),0);
+  const meta = state.meta || META.matriz.leads.Total.at(-1), metaCum = dias.map((_,i)=>Math.round(meta*(i+1)/dias.length));
+  const n = dias.length, W = 1000, H = 262, base = 230, top = meta ? 62 : 50, gap = 3;
+  const bw = (W - gap*(n-1))/n;
+  const max = Math.max(...cum, meta||0) || 1, y = v => base - (v/max)*(base-top);
+  const last = n-1;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px;font-family:Inter,sans-serif" role="img" aria-label="Leads acumulados por dia">`;
+  dias.forEach((d,i)=>{
+    const x = i*(bw+gap), prev = i?cum[i-1]:0, cx = x+bw/2;
+    if(meta) s += `<rect x="${x}" y="${y(metaCum[i])}" width="${bw}" height="${base-y(metaCum[i])}" fill="#f9fafb"/>`;
+    s += `<rect x="${x}" y="${y(prev)}" width="${bw}" height="${base-y(prev)}" fill="#10b981"/>`;
+    s += `<rect x="${x}" y="${y(cum[i])}" width="${bw}" height="${Math.max(0,y(prev)-y(cum[i]))}" fill="#fb8c45"><title>${fmt(dL[i])} leads em ${ddmm(d)}</title></rect>`;
+    const topV = y(Math.max(cum[i], meta?metaCum[i]:0));
+    s += `<text x="${cx}" y="${topV-5}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3f3f46">${fmt(cum[i])}</text>`;
+    s += `<text x="${cx}" y="${topV-18}" text-anchor="middle" font-size="9" font-weight="600" fill="#f97316">+${fmt(dL[i])}</text>`;
+    if(meta) s += `<text x="${cx}" y="${topV-30}" text-anchor="middle" font-size="8.5" fill="#a1a1aa">meta ${fmt(metaCum[i])}</text>`;
+    s += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="9" font-weight="600" fill="${i===last?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+    if(i===last){ const by = topV - (meta?58:46); s += `<rect x="${cx-24}" y="${by}" width="48" height="16" rx="3" fill="#0a0a0a"/><text x="${cx}" y="${by+11}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">ÚLTIMO DIA</text>`; }
+  });
+  s += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
+  $('chart').innerHTML = s;
+
+  const falta = Math.max(0, meta - L);
+  $('paceLbl').textContent = meta ? 'Média necessária no período' : 'Média de leads por dia';
+  $('pace').textContent = (meta ? meta/n : L/n).toLocaleString('pt-BR',{maximumFractionDigits:1});
+  $('dayTitle').textContent = `Data do dia: ${ddmm(dias[last])}`;
+  $('dLeads').textContent = fmt(dL[last]);
+  $('dGr').textContent = pct(dG[last], dL[last], 0);
+  $('dNa').textContent = pct(sum(byDay[last].filter(r=>r[C.seg]==='Não aluno'),'l'), dL[last], 0);
+  $('dCum').textContent = fmt(cum[last]); $('dCumG').textContent = fmt(cumG[last]);
+  $('dAB').textContent = pct(sum(rs.filter(r=>r[C.faixa]==='A'||r[C.faixa]==='B'),'l'), L - sum(rs.filter(r=>r[C.faixa]==='Sem score'),'l'));
+  $('mReal').textContent = fmt(L);
+  if(meta){ $('mMeta').textContent = fmt(meta);
+    const g = (L-meta)/meta*100; $('mGapP').textContent = (g>0?'+':'')+g.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+    $('mGapP').className = 'text-[18px] font-bold tabnum ' + (g<0?'text-red-500':'text-emerald-600');
+    $('mGap').textContent = falta ? fmt(falta) : 'Meta batida'; }
+  else { $('mMeta').textContent='–'; $('mGapP').textContent='–'; $('mGapP').className='text-[18px] font-bold tabnum text-zinc-400'; $('mGap').textContent='Informe a meta'; $('mGap').className='text-[13px] font-semibold text-zinc-400 pt-2'; }
+  if(meta) $('mGap').className='text-[18px] font-bold text-emerald-600 tabnum';
+
+  // ---- canal table
+  const rc = filtered(true), Lt = sum(rc,'l');
+  const vals = canais.map(c=>{const x=rc.filter(r=>r[C.canal]===c);return {c,x,l:sum(x,'l')};}).filter(v=>v.l);
+  const maxL = Math.max(...vals.map(v=>v.l),1);
+  const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b';
+  let t = `<tr><th class="${th} !text-left">Canal</th><th class="${th}">Leads</th><th class="${th}">% do total</th><th class="${th}">No grupo</th><th class="${th}">Não alunos</th><th class="${th}">A+B (resp.)</th><th class="${th}">Não respondeu</th></tr>`;
+  vals.forEach(({c,x,l})=>{
+    const on = state.canal===c;
+    const ab = sum(x.filter(r=>r[C.faixa]==='A'||r[C.faixa]==='B'),'l'), ss = sum(x.filter(r=>r[C.faixa]==='Sem score'),'l');
+    const td = 'text-right py-2.5 px-3 border-b';
+    t += `<tr tabindex="0" data-c="${c}" class="cursor-pointer ${on?'bg-indigo-50':'hover:bg-zinc-50'}"><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${logo(c)}${c}</span></td>
+      <td class="${td}"><div class="flex items-center justify-end gap-2.5"><span class="font-semibold">${fmt(l)}</span><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-indigo-500" style="width:${l/maxL*100}%"></i></span></div></td>
+      <td class="${td} text-zinc-600">${pct(l,Lt)}</td><td class="${td} text-emerald-600 font-semibold">${pct(sum(x,'g'),l)}</td>
+      <td class="${td} text-indigo-600 font-semibold">${pct(sum(x.filter(r=>r[C.seg]==='Não aluno'),'l'),l)}</td>
+      <td class="${td} text-amber-600 font-semibold">${pct(ab,l-ss)}</td><td class="${td} text-zinc-500">${pct(ss,l)}</td></tr>`;
+  });
+  $('tCanal').innerHTML = t;
+  bindCanal('tCanal');
+
+  // ---- clusters + grupos
+  const col = {'Não aluno':'#6366f1','Aluno 7d':'#10b981','Aluno 14d':'#34d399','Aluno 30d':'#fb8c45','Aluno antigo':'#a1a1aa'};
+  const sv = SEGS.map(sg=>[sg,sum(rs.filter(r=>r[C.seg]===sg),'l')]), sm = Math.max(...sv.map(v=>v[1]),1);
+  const hb = (lbl,v,m,c,extra) => `<div class="grid grid-cols-[96px_1fr_92px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${lbl}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/m*100}%;background:${c}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${extra}</span></span></div>`;
+  const ab = DATA.alunos_base || {};
+  const head = `<div class="grid grid-cols-[124px_1fr_92px_96px] gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1 border-b"><span>Cluster</span><span></span><span class="text-right">Leads</span><span class="text-right">% da base</span></div>`;
+  $('bSeg').innerHTML = head + sv.map(([k,v])=>{
+    const b = ab[k], base = b ? `<b class="text-emerald-600">${pct(b.captados,b.total,1)}</b><div class="text-[10px] text-zinc-400">${fmt(b.captados)} de ${fmt(b.total)}</div>` : `<span class="text-zinc-300">–</span>`;
+    return `<div class="grid grid-cols-[124px_1fr_92px_96px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700 inline-flex items-center gap-2 whitespace-nowrap">${badge(k)}${k}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${v/sm*100}%;background:${col[k]}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${pct(v,L,0)}</span></span><span class="text-right tabnum leading-tight">${k==='Não aluno'?'<span class="text-zinc-300">–</span>':base}</span></div>`;
+  }).join('') + (DATA.alunos_base ? `<p class="text-[10.5px] text-muted-foreground mt-1">% da base = alunos do cluster na aba Base AQUISIÇÃO que já se inscreveram.</p>` : `<p class="text-[10.5px] text-amber-600 mt-1">Para ver o % da base, adicione o nó "Base Aquisição" no n8n.</p>`);
+  renderPen();
+  const gv = Object.entries(DATA.grupos), gm = Math.max(...gv.map(g=>g[1]));
+  $('bGrp').innerHTML = gv.map(([k,v])=>hb(k,v,gm,'#10b981',pct(v,DATA.grupos_total,0))).join('');
 }
-const prioPorEmail = {};
-const aplicAgg = {};
-let apComp = 0, apTotal = 0;
-const aplicacoes = noh('Aplicações');
-if (aplicacoes){
-  const m = mapearColunas(aplicacoes, COL.aplic);
-  DIAG['Aplicações'] = { colunas: m, todas: ordemColunas(aplicacoes), linhas: aplicacoes.length };
-  for (const r of aplicacoes){
-    const em = mail(r[m.email]);
-    const prio = lePrio(r[m.prio]);
-    const cv = slug(r[m.completa]);
-    const completa = /incomplet|parcial|abandon|rascunho/.test(cv) ? 0
-                   : (prio !== '—' || /complet|finaliz|conclu/.test(cv) ? 1 : 0);
-    const L = porEmail[em] || porFone[fone(r[m.telefone])] || null;
-    if (em && prio !== '—' && !prioPorEmail[em]) prioPorEmail[em] = prio;
-    const dia = toISO(r[m.data]) || '';
-    const k = `${dia}|${L?L.cluster:'Sem match'}|${L?L.canal:'sem match'}|${prio}|${completa}`;
-    aplicAgg[k] = (aplicAgg[k] || 0) + 1;
-    apTotal++; if (completa) apComp++;
+
+const PAL = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#14b8a6','#8b5cf6','#f97316'];
+function logo(c){
+  const i = Math.max(0, canais.indexOf(c)), src = CANAL_IMAGENS[c] || '';
+  const ini = c.replace(/[^a-z0-9]/gi,' ').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const fb = `<span class="w-5 h-5 rounded grid place-items-center text-white text-[8px] font-bold" style="background:${PAL[i%PAL.length]}">${ini}</span>`;
+  if(!src) return `<span class="w-5 h-5 shrink-0 inline-block">${fb}</span>`;
+  const url = /^https?:|^data:|\.(png|jpe?g|svg|webp|gif)$/i.test(src) ? src : `https://www.google.com/s2/favicons?domain=${encodeURIComponent(src)}&sz=64`;
+  return `<span class="relative w-5 h-5 shrink-0 inline-block">${fb}<img src="${url}" alt="" loading="lazy" class="absolute inset-0 w-5 h-5 rounded object-cover bg-white" onerror="this.remove()"></span>`;
+}
+
+function badge(k, px=20){
+  const src = CLUSTER_IMAGENS[k];
+  if(!src) return `<span class="inline-block shrink-0" style="width:${px}px;height:${px}px"></span>`;
+  return `<img src="${src}" alt="" loading="lazy" class="inline-block shrink-0 rounded-full" style="width:${px}px;height:${px}px" onerror="this.style.visibility='hidden'">`;
+}
+
+function renderPen(){
+  const ab = DATA.alunos_base;
+  const box = $('penGrid');
+  if(!ab){ box.innerHTML = `<div class="col-span-full rounded-lg border border-dashed p-5 text-[12px] text-muted-foreground">Adicione o nó "Base Aquisição" no n8n para ver esta métrica.</div>`; $('penRecent').textContent='–'; return; }
+  const ord = ['Aluno 7d','Aluno 14d','Aluno 30d','Aluno antigo'];
+  const cor = {'Aluno 7d':'#10b981','Aluno 14d':'#34d399','Aluno 30d':'#fb8c45','Aluno antigo':'#a1a1aa'};
+  const d = s => s ? `${s.slice(8)}/${s.slice(5,7)}` : '';
+  box.innerHTML = ord.filter(k=>ab[k]).map(k=>{ const {total,captados,de,ate} = ab[k];
+    const janela = k==='Aluno antigo' ? `até ${d(ate)}` : `${d(de)} a ${d(ate)}`;
+    return `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-5">
+      <div class="flex items-center gap-2.5">${badge(k,34)}<div><div class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">${k.replace('Aluno ','Alunos ').toUpperCase()}</div>
+      <div class="text-[10px] text-zinc-500 mt-0.5">Compras ${janela}</div></div></div>
+      <div class="text-[30px] font-bold text-emerald-600 mt-3 tabnum">${pct(captados,total)}</div>
+      <div class="h-2 rounded-full bg-white border border-emerald-100 overflow-hidden mt-2"><i class="block h-full" style="width:${pctN(captados,total)}%;background:${cor[k]}"></i></div>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Captados</div><div class="text-[15px] font-bold text-zinc-900 tabnum">${fmt(captados)}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Base total</div><div class="text-[15px] font-bold text-amber-500 tabnum">${fmt(total)}</div></div>
+      </div>
+      <div class="text-[11px] text-zinc-500 mt-2">Faltam <b class="text-red-500 tabnum">${fmt(total-captados)}</b> alunos</div>
+    </div>`; }).join('');
+  const rec = ['Aluno 7d','Aluno 14d','Aluno 30d'].filter(k=>ab[k]);
+  const tc = rec.reduce((s,k)=>s+ab[k].captados,0), tt = rec.reduce((s,k)=>s+ab[k].total,0);
+  $('penRecent').textContent = `${pct(tc,tt)} (${fmt(tc)} de ${fmt(tt)})`;
+}
+
+const brl = (v,d=0) => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let mtAba = 'leads';
+let dpFase = '';
+function renderDisp(){
+  const sumD = (rs,k) => rs.reduce((s,r)=>s+r[CD[k]],0);
+  const porUtm = (u, canal) => rowsDisp.filter(r => r[CD.content] === u && (!canal || r[CD.canal] === canal));
+  const todas = DISPAROS.map(d => {
+    const x = porUtm(d.utm, d.canal), l = sumD(x,'l'), resp = sumD(x,'resp');
+    return { ...d, l, g:sumD(x,'g'), na:sumD(x,'na'), resp, ab:sumD(x,'ab'),
+             tx: d.entregues ? l/d.entregues : null, cpl: l ? d.custo/l : null,
+             cpab: sumD(x,'ab') ? d.custo/sumD(x,'ab') : null };
+  });
+  const linhas = dpFase ? todas.filter(d=>d.fase===dpFase) : todas;
+  const T = rs => ({ base:rs.reduce((s,d)=>s+d.base,0), ent:rs.reduce((s,d)=>s+d.entregues,0),
+    l:rs.reduce((s,d)=>s+d.l,0), c:rs.reduce((s,d)=>s+d.custo,0), g:rs.reduce((s,d)=>s+d.g,0),
+    resp:rs.reduce((s,d)=>s+d.resp,0), ab:rs.reduce((s,d)=>s+d.ab,0) });
+  const t = T(linhas);
+
+  $('dpQtd').textContent = fmt(linhas.length);
+  $('dpQtdSub').textContent = `${fmt(t.ent)} entregues de ${fmt(t.base)} · entregabilidade ${pct(t.ent,t.base,0)}`;
+  $('dpLeads').textContent = fmt(t.l);
+  $('dpLeadsSub').textContent = t.l ? `${pct(t.l, sum(rows,'l'))} de toda a captação` : 'nenhum lead com esses utm_content ainda';
+  $('dpTx').textContent = t.ent ? pct(t.l,t.ent,2) : '–';
+  $('dpTxSub').textContent = `${fmt(t.l)} leads para ${fmt(t.ent)} entregues`;
+  $('dpCpl').textContent = t.l ? brl(t.c/t.l,2) : '–';
+  $('dpCplSub').textContent = `${brl(t.c,2)} investidos${dpFase?' nesta fase':' no total'}`;
+  const melhor = linhas.filter(d=>d.cpl!==null).sort((a,b)=>a.cpl-b.cpl)[0];
+  $('dpMelhor').textContent = melhor ? brl(melhor.cpl,2) : '–';
+  $('dpMelhorSub').textContent = melhor ? melhor.utm : 'aguardando leads';
+
+  // filtro de fase
+  const fases = [...new Set(DISPAROS.map(d=>d.fase))];
+  $('dpFiltro').innerHTML = [['','Todas as fases'], ...fases.map(f=>[f, f])].map(([v,l])=>
+    `<button data-f="${v}" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border ${dpFase===v?'bg-zinc-900 text-white border-zinc-900':'bg-white text-zinc-600 hover:bg-zinc-50'}">${l}</button>`).join('');
+  $('dpFiltro').querySelectorAll('button').forEach(b=>b.onclick=()=>{ dpFase=b.dataset.f; renderDisp(); });
+
+  // tabela agrupada por fase
+  const th='text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td='text-right py-2.5 px-3 border-b';
+  const maxTx = Math.max(...todas.map(d=>d.tx||0), 0.0001);
+  let h = `<tr><th class="${th} !text-left">Disparo</th><th class="${th} !text-left">Comunicação</th><th class="${th}">Entregues</th><th class="${th}">Entregab.</th><th class="${th}">Leads</th><th class="${th} w-[150px]">Conversão</th><th class="${th}">Custo</th><th class="${th}">CPL</th><th class="${th}">No grupo</th><th class="${th}">Pesquisa</th><th class="${th}">A+B</th></tr>`;
+  for(const f of fases){
+    const g = linhas.filter(d=>d.fase===f); if(!g.length) continue;
+    const s = T(g), info = FASES[f] || {nome:f, base:''};
+    h += `<tr class="bg-zinc-50/80"><td colspan="11" class="px-3 py-2 border-b"><span class="text-[11px] font-bold text-zinc-900">${info.nome}</span> <span class="text-[10px] text-zinc-500">· ${info.base} · ${g[0].data.slice(8)}/${g[0].data.slice(5,7)}</span></td></tr>`;
+    for(const d of g){
+      h += `<tr class="hover:bg-zinc-50"><td class="${td} !text-left"><div class="font-semibold text-zinc-900">${d.nome}</div><div class="text-[10px] text-zinc-500">${d.utm} · ${d.publico}</div></td>
+        <td class="${td} !text-left text-zinc-600">${d.com}</td>
+        <td class="${td} text-zinc-600">${fmt(d.entregues)}<div class="text-[10px] text-zinc-400">de ${fmt(d.base)}</div></td>
+        <td class="${td} ${d.entregues/d.base<0.9?'text-red-500 font-semibold':'text-zinc-600'}">${pct(d.entregues,d.base,0)}</td>
+        <td class="${td} font-bold text-indigo-600">${fmt(d.l)}</td>
+        <td class="${td}"><div class="flex items-center justify-end gap-2"><span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full bg-emerald-500" style="width:${(d.tx||0)/maxTx*100}%"></i></span><b class="w-[46px] text-emerald-600">${d.tx===null?'–':pct(d.l,d.entregues,2)}</b></div></td>
+        <td class="${td} text-zinc-600">${brl(d.custo,2)}</td>
+        <td class="${td} font-bold ${d.cpl===null?'text-zinc-300':(d.cpl<=5?'text-emerald-600':d.cpl<=10?'text-amber-600':'text-red-500')}">${d.cpl===null?'–':brl(d.cpl,2)}</td>
+        <td class="${td} text-emerald-600">${d.l?pct(d.g,d.l,0):'–'}</td>
+        <td class="${td} text-blue-600">${d.l?pct(d.resp,d.l,0):'–'}</td>
+        <td class="${td} text-amber-600 font-semibold">${d.resp?pct(d.ab,d.resp,0):'–'}</td></tr>`;
+    }
+    h += `<tr class="bg-zinc-50 text-[11px]"><td class="${td} !text-left font-bold text-zinc-700">Subtotal ${f}</td><td class="${td}"></td>
+      <td class="${td} font-semibold">${fmt(s.ent)}</td><td class="${td}">${pct(s.ent,s.base,0)}</td>
+      <td class="${td} font-bold text-indigo-600">${fmt(s.l)}</td><td class="${td} font-bold text-emerald-600">${pct(s.l,s.ent,2)}</td>
+      <td class="${td} font-semibold">${brl(s.c,2)}</td><td class="${td} font-bold text-amber-600">${s.l?brl(s.c/s.l,2):'–'}</td>
+      <td class="${td} text-emerald-600">${s.l?pct(s.g,s.l,0):'–'}</td><td class="${td} text-blue-600">${s.l?pct(s.resp,s.l,0):'–'}</td>
+      <td class="${td} text-amber-600">${s.resp?pct(s.ab,s.resp,0):'–'}</td></tr>`;
   }
+  h += `<tr class="bg-zinc-900 text-white"><td class="${td} !text-left font-bold">Total${dpFase?' ('+dpFase+')':''}</td><td class="${td}"></td>
+    <td class="${td} font-bold">${fmt(t.ent)}<div class="text-[10px] text-zinc-400 font-normal">de ${fmt(t.base)}</div></td><td class="${td}">${pct(t.ent,t.base,0)}</td>
+    <td class="${td} font-bold">${fmt(t.l)}</td><td class="${td} font-bold">${pct(t.l,t.ent,2)}</td>
+    <td class="${td} font-bold">${brl(t.c,2)}</td><td class="${td} font-bold">${t.l?brl(t.c/t.l,2):'–'}</td>
+    <td class="${td}">${t.l?pct(t.g,t.l,0):'–'}</td><td class="${td}">${t.l?pct(t.resp,t.l,0):'–'}</td>
+    <td class="${td}">${t.resp?pct(t.ab,t.resp,0):'–'}</td></tr>`;
+  $('dpTabela').innerHTML = h;
+  $('dpNota').textContent = t.l ? 'Conversão sobre as mensagens entregues. CPL = custo ÷ leads com aquele utm_content; verde até R$ 5, âmbar até R$ 10, vermelho acima. A+B é sobre quem respondeu a pesquisa. Entregabilidade abaixo de 90% aparece em vermelho e costuma indicar base desgastada.'
+    : 'Nenhum lead chegou ainda com esses utm_content. Confira se o painel já está lendo a planilha desta campanha e se o utm_content na lista DISPAROS é igual ao do link do disparo.';
+
+  // ranking de CPL
+  const rank = [...todas].filter(d=>d.cpl!==null).sort((a,b)=>a.cpl-b.cpl);
+  const maxCpl = Math.max(...rank.map(d=>d.cpl), 0.01);
+  $('dpBarras').innerHTML = rank.map(d=>{
+    const cor = d.cpl<=5 ? '#10b981' : d.cpl<=10 ? '#f59e0b' : '#ef4444';
+    return `<div class="grid grid-cols-[122px_1fr_118px] items-center gap-3 text-[12px]">
+      <span class="font-semibold text-zinc-700 truncate" title="${d.nome}">${d.utm}</span>
+      <span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${d.cpl/maxCpl*100}%;background:${cor}"></i></span>
+      <span class="text-right tabnum"><b style="color:${cor}">${brl(d.cpl,2)}</b> <span class="text-zinc-400">${fmt(d.l)} leads</span></span></div>`;
+  }).join('') || '<p class="text-[12px] text-muted-foreground">Aguardando leads.</p>';
+
+  // por público
+  const pubs = [...new Set(todas.map(d=>d.publico))];
+  const estilo = { 'Alunos':['border-emerald-100 bg-emerald-50/40','text-emerald-800','text-emerald-600'],
+                   'Não alunos':['border-indigo-100 bg-indigo-50/40','text-indigo-800','text-indigo-600'],
+                   'Checkout':['border-amber-100 bg-amber-50/40','text-amber-800','text-amber-600'] };
+  $('dpPublico').innerHTML = pubs.map(p=>{
+    const x = todas.filter(d=>d.publico===p), s = T(x);
+    const [box,tit,num] = estilo[p] || ['border-zinc-100 bg-zinc-50/40','text-zinc-800','text-zinc-600'];
+    return `<div class="rounded-lg border ${box} p-5">
+      <div class="flex items-baseline justify-between"><div class="text-[10px] font-bold uppercase tracking-wider ${tit}">${p}</div><div class="text-[10px] text-zinc-500">${x.length} disparo${x.length>1?'s':''} · ${fmt(s.ent)} entregues</div></div>
+      <div class="grid grid-cols-4 gap-3 mt-4">
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Leads</div><div class="text-[20px] font-bold text-zinc-900 tabnum">${fmt(s.l)}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Conversão</div><div class="text-[20px] font-bold ${num} tabnum">${s.ent?pct(s.l,s.ent,2):'–'}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">CPL</div><div class="text-[20px] font-bold text-amber-500 tabnum">${s.l?brl(s.c/s.l,2):'–'}</div></div>
+       <div><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Investido</div><div class="text-[20px] font-bold text-zinc-700 tabnum">${brl(s.c)}</div></div>
+      </div></div>`;
+  }).join('');
+
+  // Direto x Resgate dentro do mesmo público
+  const tipo = d => d.com.startsWith('Direto') ? 'Direto' : d.com.startsWith('Resgate') ? 'Resgate' : null;
+  let c = `<tr><th class="${th} !text-left">Público</th><th class="${th}">Entregues</th><th class="${th}">Leads</th><th class="${th}">Conversão</th><th class="${th}">CPL</th><th class="${th}">Entregues</th><th class="${th}">Leads</th><th class="${th}">Conversão</th><th class="${th}">CPL</th><th class="${th} !text-left">Vencedor</th></tr>`;
+  let temComp = false;
+  for(const p of pubs){
+    const dir = todas.filter(d=>d.publico===p && tipo(d)==='Direto'), res = todas.filter(d=>d.publico===p && tipo(d)==='Resgate');
+    if(!dir.length || !res.length) continue;
+    temComp = true;
+    const a = T(dir), b = T(res);
+    const ta = a.ent?a.l/a.ent:0, tb = b.ent?b.l/b.ent:0;
+    const venc = ta===tb ? 'Empate' : ta>tb ? 'Direto' : 'Resgate';
+    const dif = tb ? Math.abs(ta-tb)/Math.min(ta,tb)*100 : 0;
+    c += `<tr class="hover:bg-zinc-50"><td class="${td} !text-left font-semibold text-zinc-900">${p}</td>
+      <td class="${td} text-zinc-500">${fmt(a.ent)}</td><td class="${td} font-semibold">${fmt(a.l)}</td><td class="${td} ${ta>=tb?'font-bold text-emerald-600':'text-zinc-600'}">${pct(a.l,a.ent,2)}</td><td class="${td} text-amber-600">${a.l?brl(a.c/a.l,2):'–'}</td>
+      <td class="${td} text-zinc-500">${fmt(b.ent)}</td><td class="${td} font-semibold">${fmt(b.l)}</td><td class="${td} ${tb>ta?'font-bold text-emerald-600':'text-zinc-600'}">${pct(b.l,b.ent,2)}</td><td class="${td} text-amber-600">${b.l?brl(b.c/b.l,2):'–'}</td>
+      <td class="${td} !text-left"><b class="${venc==='Direto'?'text-blue-600':venc==='Resgate'?'text-violet-600':'text-zinc-500'}">${venc}</b> <span class="text-[10px] text-zinc-400">${venc==='Empate'?'':'+'+dif.toLocaleString('pt-BR',{maximumFractionDigits:0})+'%'}</span></td></tr>`;
+  }
+  $('dpComunicacao').innerHTML = temComp ? c : `<tr><td class="${td} !text-left text-zinc-400">Sem público com as duas comunicações.</td></tr>`;
+
+  // outros utm_content
+  const cadastrados = new Set(DISPAROS.map(d=>d.utm));
+  const outros = {};
+  rowsDisp.forEach(r=>{ const u=r[CD.content]; if(cadastrados.has(u)) return;
+    const k = u+'|'+r[CD.canal]; (outros[k] = outros[k] || {u, c:r[CD.canal], l:0, g:0, na:0});
+    outros[k].l += r[CD.l]; outros[k].g += r[CD.g]; outros[k].na += r[CD.na]; });
+  const ov = Object.values(outros).sort((a,b)=>b.l-a.l).slice(0,20);
+  $('dpOutros').innerHTML = `<tr><th class="${th} !text-left">utm_content</th><th class="${th} !text-left">Canal</th><th class="${th}">Leads</th><th class="${th}">% do canal</th><th class="${th}">Não alunos</th><th class="${th}">No grupo</th></tr>` +
+    (ov.length ? ov.map(o=>{ const canalTot = sum(rows.filter(r=>r[C.canal]===o.c),'l');
+      return `<tr class="hover:bg-zinc-50"><td class="${td} !text-left font-semibold text-zinc-900">${o.u}</td>
+      <td class="${td} !text-left"><span class="inline-flex items-center gap-2">${logo(o.c)}${o.c}</span></td>
+      <td class="${td} font-semibold">${fmt(o.l)}</td><td class="${td} text-zinc-500">${pct(o.l,canalTot)}</td>
+      <td class="${td} text-blue-600">${pct(o.na,o.l,0)}</td><td class="${td} text-emerald-600">${pct(o.g,o.l,0)}</td></tr>`; }).join('')
+      : `<tr><td class="${td} !text-left text-zinc-400" colspan="6">Todos os utm_content da base já estão cadastrados.</td></tr>`);
 }
 
-// ---- Transações
-const vendasRows = [];
-const compradores = new Set();
-let semMatch = 0;
+function renderComp(){
+  const rs = filtered(false), L = sum(rs,'l');
+  const s = sum(rs,'s'), b = sum(rs,'b'), sb = sum(rs,'sb'), novo = L - s;
+  $('cNovo').textContent = pct(novo,L); $('cNovoSub').textContent = `${fmt(novo)} leads que não estavam em nenhuma captação anterior`;
+  $('cSob').textContent = pct(s,L); $('cSobSub').textContent = `${fmt(s)} leads já estavam em outra captação`;
+  $('cFds').textContent = fmt(b); $('cFdsSub').textContent = `${pct(b,L)} da base já comprou o FDS`;
+  $('cSfds').textContent = fmt(sb);
+  const kv = (lbl,v) => `<span class="text-[8.5px] font-semibold uppercase tracking-tight text-amber-700">${lbl}</span><span class="text-[13px] font-bold text-amber-600 tabnum">${v}</span>`;
+  $('cSfdsA').innerHTML = kv('Dos compradores FDS', pct(sb,b));
+  $('cSfdsB').innerHTML = kv('Dos sobrepostos', pct(sb,s));
 
-function empurra(d, { dia, plat, utm, vendedor, em, bruto, liq, contratado, pagto }){
-  // Data no futuro não existe em caixa: joga para hoje e registra, para o painel
-  // avisar em vez de desenhar barra em dia que ainda não aconteceu.
-  if (dia && dia > hoje) { d.futuras = (d.futuras || 0) + 1; d.data_futura = dia; dia = hoje; }
-  const L = porEmail[em] || null;
-  if (!L) semMatch++;
-  if (em) compradores.add(em);
-  const origem = slug(utm).includes('awsales') ? 'awsales' : 'comercial';
-  if (!dia) { d.sem_data = (d.sem_data || 0) + 1; dia = hoje; }   // ilegível: hoje, nunca o futuro
-  vendasRows.push([dia, plat, origem, txt(vendedor) || '—',
-    L ? L.cluster : 'Sem match', L ? L.canal : 'sem match',
-    prioPorEmail[em] || '—', pagto, txt(utm) || '—',
-    +bruto.toFixed(2), +liq.toFixed(2), +contratado.toFixed(2)]);
-  d.validas++;
+  const blocks = [
+    ['Novo, não aluno', sum(rs.filter(r=>r[C.seg]==='Não aluno'),'l') - sum(rs.filter(r=>r[C.seg]==='Não aluno'),'s') - (sum(rs.filter(r=>r[C.seg]==='Não aluno'),'b') - sum(rs.filter(r=>r[C.seg]==='Não aluno'),'sb')), '#3b82f6'],
+    ['Novo, já aluno', 0, '#93c5fd'],
+    ['Sobreposto, sem FDS', s - sb, '#6366f1'],
+    ['Comprou FDS', b, '#10b981'],
+  ];
+  // "Novo" = não sobreposto e não comprador FDS; divide entre aluno e não aluno
+  const novoSemFds = L - s - (b - sb);
+  blocks[1][1] = novoSemFds - blocks[0][1];
+  $('compBar').innerHTML = blocks.map(([k,v,c])=> v>0 ? `<div title="${k}: ${fmt(v)}" style="width:${v/L*100}%;background:${c}" class="h-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden whitespace-nowrap">${v/L>.07?pct(v,L,0):''}</div>` : '').join('');
+  const desc = {'Novo, não aluno':'Nunca esteve em outra captação e não tem compra na base de aquisição.','Novo, já aluno':'Não é sobreposto, mas já comprou algum produto de entrada.','Sobreposto, sem FDS':'Já estava em webinar anterior, Ascensão ou Ruptura, e ainda não comprou o FDS.','Comprou FDS':`Já comprou o back-end. ${fmt(sb)} deles também são sobrepostos.`};
+  $('compGrid').innerHTML = blocks.map(([k,v,c])=>`<div class="rounded-lg border p-4"><div class="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-zinc-600"><i class="w-2.5 h-2.5 rounded-sm inline-block" style="background:${c}"></i>${k}</div><div class="text-[24px] font-bold text-zinc-900 mt-2 tabnum">${fmt(v)}</div><div class="text-[11px] font-semibold tabnum" style="color:${c}">${pct(v,L)} da base</div><div class="text-[11px] text-muted-foreground mt-2 leading-snug">${desc[k]}</div></div>`).join('');
+
+  const hb = (lbl,v,m,c,extra) => `<div class="grid grid-cols-[118px_1fr_92px] items-center gap-3 text-[12px]"><span class="font-medium text-zinc-700">${lbl}</span><span class="h-3 bg-zinc-100 rounded-sm overflow-hidden"><i class="block h-full" style="width:${m?v/m*100:0}%;background:${c}"></i></span><span class="text-right tabnum"><b class="text-zinc-900">${fmt(v)}</b> <span class="text-zinc-400">${extra}</span></span></div>`;
+  const orig = [['Lead Webinar','w'],['Lead Ascensão','asc'],['Lead Ruptura','rup'],['Comunidade Sintonizar','cs'],['High-Ticket','ht']].map(([k,c])=>[k,sum(rs,c)]);
+  const om = Math.max(...orig.map(o=>o[1]),1);
+  $('bOrig').innerHTML = orig.map(([k,v])=>hb(k,v,om,'#6366f1',pct(v,L,0))).join('');
+  const rein = [['Nenhuma','p0','#3b82f6'],['1 edição','p1','#a5b4fc'],['2 edições','p2','#818cf8'],['3 ou mais','p3','#4f46e5']].map(([k,c,col])=>[k,sum(rs,c),col]);
+  const rm = Math.max(...rein.map(r=>r[1]),1);
+  $('bReinc').innerHTML = rein.map(([k,v,c])=>hb(k,v,rm,c,pct(v,L,0))).join('');
+  const ed = [1,2,3,4,5,6,7].map(i=>['W0'+i, sum(rs,'w'+i)]), em = Math.max(...ed.map(e=>e[1]),1);
+  $('bEdic').innerHTML = ed.map(([k,v])=>hb(k,v,em,'#10b981',pct(v,L,0))).join('');
+
+  const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td = 'text-right py-2.5 px-3 border-b';
+  const head = first => `<tr><th class="${th} !text-left">${first}</th><th class="${th}">Leads</th><th class="${th}">Base nova</th><th class="${th}">Sobrepostos</th><th class="${th}">Compr. FDS</th><th class="${th}">Sobrep. FDS</th><th class="${th}">3+ webinars</th></tr>`;
+  const line = (k,x,attr,on) => { const l=sum(x,'l'); return `<tr ${attr} class="${attr?'cursor-pointer ':''}${on?'bg-indigo-50':'hover:bg-zinc-50'}"><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${attr?logo(k):(CLUSTER_IMAGENS[k]?badge(k):'')}${k}</span></td><td class="${td} font-semibold">${fmt(l)}</td><td class="${td} text-blue-600 font-semibold">${pct(l-sum(x,'s'),l)}</td><td class="${td} text-indigo-600 font-semibold">${pct(sum(x,'s'),l)}</td><td class="${td} text-emerald-600 font-semibold">${fmt(sum(x,'b'))} <span class="text-zinc-400 font-normal">${pct(sum(x,'b'),l)}</span></td><td class="${td} text-amber-600 font-semibold">${fmt(sum(x,'sb'))}</td><td class="${td} text-zinc-600">${pct(sum(x,'p3'),l)}</td></tr>`; };
+  const rc = filtered(true);
+  $('tComp').innerHTML = head('Canal') + canais.map(c=>{const x=rc.filter(r=>r[C.canal]===c); return sum(x,'l') ? line(c,x,`tabindex="0" data-c="${c}"`,state.canal===c) : '';}).join('');
+  $('tCompSeg').innerHTML = head('Perfil') + SEGS.map(sg=>{const x=rs.filter(r=>r[C.seg]===sg); return sum(x,'l') ? line(sg,x,'',false) : '';}).join('');
+  bindCanal('tComp');
 }
 
-// --- ASSINY: status == "paid" · valor = "Valor R$" · taxa = "taxa" (÷100)
-;(function(){
-  const dados = noh('Base Assiny'); if (!dados) return;
-  const m = mapearColunas(dados, COL.assiny);
-  const d = DIAG['Base Assiny'] = { colunas: m, todas: ordemColunas(dados), linhas: dados.length,
-                                    validas: 0, fora_status: 0, sem_comprador: 0, status_vistos: {} };
-  let somaTaxa = 0, somaVal = 0;
-  for (const r of dados){
-    const st = slug(r[m.status]);
-    const em = mail(r[m.email]);
-    if (!em) { d.sem_comprador++; continue; }           // linha de total do rodapé
-    d.status_vistos[st || '(vazio)'] = (d.status_vistos[st || '(vazio)'] || 0) + 1;
-    if (!STATUS_OK.assiny.includes(st)) { d.fora_status++; continue; }
-    const bruto = brNum(r[m.valor]); if (!bruto) continue;
-    const taxa = Math.abs(brNum(r[m.taxa])) / 100;      // a planilha traz ×100
-    somaTaxa += taxa; somaVal += bruto;
-    const pg = slug(r[m.pagto]);
-    empurra(d, { dia: toISO(r[m.data]), plat:'assiny', utm: r[m.utm], vendedor: r[m.vendedor], em,
-      bruto, liq: bruto - taxa, contratado: bruto,
-      pagto: pg.includes('pix') ? 'pix' : (pg.includes('credit')||pg.includes('cartao')||pg.includes('card')) ? 'cartao'
-           : pg.includes('boleto') ? 'boleto' : 'cartaopix' });
-  }
-  d.taxa_media_pct = somaVal ? +(somaTaxa / somaVal * 100).toFixed(2) : null;
-})();
+function renderMeta(){
+  const M = META, metaLeads = M.matriz.leads.Total.at(-1);
+  const L = sum(rows,'l');
+  const bySeg = k => sum(rows.filter(r=>r[C.seg]===k),'l');
+  // cards
+  $('mtLeads').textContent = fmt(metaLeads);
+  $('mtLeadsBar').style.width = Math.min(100,pctN(L,metaLeads))+'%';
+  $('mtLeadsSub').textContent = `${fmt(L)} captados (${pct(L,metaLeads)}) · evento ${M.data_evento.slice(8)}/${M.data_evento.slice(5,7)}`;
+  const fat = M.matriz.faturamento.Total.at(-1), fatTot = fat + M.faturamento_strack;
+  const taxas = fat*M.taxas_pct, margem = fatTot - taxas - M.disparos - M.sms_ligacao, imposto = fat*M.imposto_pct, real = margem - imposto;
+  $('mtFat').textContent = brl(fatTot);
+  $('mtFatSub').textContent = `${brl(fat)} rastreado + ${brl(M.faturamento_strack)} sem track · ${fmt(M.matriz.compradores.Total.at(-1))} compradores`;
+  $('mtReal').textContent = brl(real);
+  $('mtRealSub').textContent = `${pct(real,fatTot)} do faturamento total, após custos e impostos`;
+  const F = M.funil;
+  // --- cenário META (projeção original, partindo dos 9.055 leads de meta) ---
+  const showup = Math.floor(metaLeads*F.showup_pct), ap1 = Math.round(showup*F.aplic_dia1_pct), ap = Math.round(showup*F.aplic_pct);
+  const vendas = Math.round(metaLeads*F.vendas_lead_pct), vc = Math.round(vendas*F.cartao_pct), vb = vendas - vc;
+  const fc = vc*F.ticket_cartao, fb = vb*F.ticket_boleto, fg = fc+fb, mg = fg*F.margem_pct;
+  // --- cenário REAL (show-up e aplicações do 1º dia aferidos + leads captados) ---
+  const leadsR  = F.leads_real || L || metaLeads;
+  const showupR = F.showup_real || showup;
+  const ap1R    = F.aplic_dia1_real || Math.round(showupR*F.aplic_dia1_pct);
+  const apR     = Math.round(showupR*F.aplic_pct);
+  const vendasR = Math.round(leadsR*F.vendas_lead_pct), vcR = Math.round(vendasR*F.cartao_pct), vbR = vendasR - vcR;
+  const fcR = vcR*F.ticket_cartao, fbR = vbR*F.ticket_boleto, fgR = fcR+fbR, mgR = fgR*F.margem_pct;
+  $('mtFunFat').textContent = brl(fgR);
+  $('mtFunSub').textContent = `${fmt(vendasR)} vendas a ${pct(F.vendas_lead_pct,1,1)} · margem de ${brl(mgR)} · com a meta de leads seria ${brl(fg)}`;
 
-// --- HOTMART: Status == "Aprovado" · valor = "Valor R$" · recebido = "Valor Recebido R$"
-;(function(){
-  const dados = noh('Base Hotmart'); if (!dados) return;
-  const m = mapearColunas(dados, COL.hotmart);
-  const d = DIAG['Base Hotmart'] = { colunas: m, todas: ordemColunas(dados), linhas: dados.length,
-                                     validas: 0, fora_status: 0, sem_comprador: 0, status_vistos: {} };
-  let somaTaxa = 0, somaVal = 0;
-  for (const r of dados){
-    const st = slug(r[m.status]);
-    const em = mail(r[m.email]);
-    if (!em) { d.sem_comprador++; const b = brNum(r[m.valor]); if (b) d.total_planilha = b; continue; }
-    d.status_vistos[st || '(vazio)'] = (d.status_vistos[st || '(vazio)'] || 0) + 1;
-    if (!STATUS_OK.hotmart.includes(st)) { d.fora_status++; continue; }
-    const bruto = brNum(r[m.valor]); if (!bruto) continue;
-    const receb = brNum(r[m.recebido]) || bruto;
-    somaTaxa += Math.max(0, bruto - receb); somaVal += bruto;
-    const pg = slug(r[m.pagto]);
-    empurra(d, { dia: toISO(r[m.data]), plat:'hotmart', utm: r[m.utm], vendedor: r[m.vendedor], em,
-      bruto, liq: receb, contratado: bruto,
-      pagto: pg.includes('pix') ? 'pix' : (pg.includes('credit')||pg.includes('cartao')||pg.includes('card')) ? 'cartao'
-           : pg.includes('boleto') ? 'boleto' : 'cartaopix' });
-  }
-  d.taxa_media_pct = somaVal ? +(somaTaxa / somaVal * 100).toFixed(2) : null;
-})();
+  // ritmo
+  const dias = [...new Set(rows.map(r=>r[C.dia]))].sort();
+  const hoje = new Date(); const hojeISO = new Date(hoje.getTime()-hoje.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const restam = Math.max(0, Math.round((new Date(M.data_evento) - new Date(hojeISO))/86400000));
+  const faltaL = Math.max(0, metaLeads - L);
+  $('mtRitmo').textContent = restam ? fmt(Math.ceil(faltaL/restam)) : '–';
+  $('mtRitmoSub').textContent = restam ? `faltam ${fmt(faltaL)} leads em ${restam} dia${restam>1?'s':''}` : 'data do evento já passou';
 
-// --- TMB: Parcela == 0 · dedup por "Pedido" · data >= início da campanha
-//     entrada = "Valor da Parcela (R$)" (caixa) · nominal = "Ticket" (venda cheia)
-;(function(){
-  const dados = noh('Base TMB'); if (!dados) return;
-  const m = mapearColunas(dados, COL.tmb);
-  const d = DIAG['Base TMB'] = { colunas: m, todas: ordemColunas(dados), linhas: dados.length,
-                                 validas: 0, fora_parcela: 0, duplicados: 0, fora_data: 0, sem_comprador: 0 };
-  const vistos = new Set();
-  for (const r of dados){
-    const em = mail(r[m.email]);
-    if (!em) { d.sem_comprador++; const b = brNum(r[m.entrada]); if (b) d.total_planilha = b; continue; }
-    if (Math.round(brNum(r[m.parcela])) !== 0) { d.fora_parcela++; continue; }   // só a ENTRADA
-    const pedido = txt(r[m.pedido]) || em;
-    if (vistos.has(pedido)) { d.duplicados++; continue; }
-    vistos.add(pedido);
-    const dia = toISO(r[m.data]);
-    if (INICIO_CAMPANHA && dia && dia < INICIO_CAMPANHA) { d.fora_data++; continue; }
-    const entrada = brNum(r[m.entrada]); if (!entrada) continue;
-    const nominal = brNum(r[m.ticket]) || entrada;
-    empurra(d, { dia, plat:'tmb', utm: r[m.utm], vendedor: r[m.vendedor], em,
-      bruto: entrada, liq: entrada, contratado: nominal, pagto: 'boleto' });
+  // cluster table
+  const ab = DATA.alunos_base || {};
+  const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b', td = 'text-right py-2.5 px-3 border-b';
+  let tb = `<tr><th class="${th} !text-left">Cluster</th><th class="${th}">Base</th><th class="${th}">Taxa premissa</th><th class="${th}">Meta de leads</th><th class="${th}">Realizado</th><th class="${th} w-[180px]">% da meta</th><th class="${th}">Taxa atual</th><th class="${th}">Faltam</th></tr>`;
+  let tm=0, tr=0;
+  for(const k of SEGS){ const p = M.premissas[k]; if(!p) continue;
+    const real = bySeg(k); tm += p.leads; tr += real;
+    const taxaAtual = k==='Não aluno' ? real/p.base : (ab[k] ? ab[k].captados/ab[k].total : real/p.base);
+    const pc = pctN(real,p.leads);
+    tb += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${badge(k)}${k}</span></td>
+      <td class="${td} text-zinc-600">${fmt(p.base)}</td><td class="${td} text-zinc-600">${pct(p.taxa,1,0)}</td>
+      <td class="${td} font-bold text-amber-500">${fmt(p.leads)}</td><td class="${td} font-bold text-emerald-600">${fmt(real)}</td>
+      <td class="${td}"><div class="flex items-center justify-end gap-2"><span class="w-[90px] h-1.5 rounded-full bg-zinc-100 overflow-hidden"><i class="block h-full ${pc>=100?'bg-emerald-500':'bg-indigo-500'}" style="width:${Math.min(100,pc)}%"></i></span><b class="w-[44px]">${pct(real,p.leads,0)}</b></div></td>
+      <td class="${td} ${taxaAtual>=p.taxa?'text-emerald-600':'text-zinc-600'} font-semibold">${(taxaAtual*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%</td>
+      <td class="${td} ${p.leads-real>0?'text-red-500':'text-emerald-600'} font-semibold">${p.leads-real>0?fmt(p.leads-real):'batida'}</td></tr>`;
   }
-})();
+  tb += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td}"></td><td class="${td}"></td><td class="${td} font-bold text-amber-500">${fmt(tm)}</td><td class="${td} font-bold text-emerald-600">${fmt(tr)}</td><td class="${td} font-bold">${pct(tr,tm,0)}</td><td class="${td}"></td><td class="${td} font-bold ${tm-tr>0?'text-red-500':'text-emerald-600'}">${tm-tr>0?fmt(tm-tr):'batida'}</td></tr>`;
+  $('mtCluster').innerHTML = tb;
 
-// PASSO 5 — conferência: o que somamos bate com a linha de total da aba?
-const PLAT_NO = { 'Base Assiny':'assiny', 'Base Hotmart':'hotmart', 'Base TMB':'tmb' };
-for (const [nome, plat] of Object.entries(PLAT_NO)) {
-  const d = DIAG[nome]; if (!d) continue;
-  d.somado = +vendasRows.filter(v => v[1] === plat).reduce((a, v) => a + v[9], 0).toFixed(2);
-  if (d.total_planilha) {
-    d.diferenca = +(d.somado - d.total_planilha).toFixed(2);
-    d.bate = Math.abs(d.diferenca) <= Math.max(1, d.total_planilha * 0.005);
+  // matriz
+  const abas = [['leads','Leads'],['realizado','Realizado x meta'],['compradores','Compradores'],['conversao','Conversão'],['faturamento','Faturamento'],['tmf','Ticket médio']];
+  $('mtTabs').innerHTML = abas.map(([k,l])=>`<button data-a="${k}" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border ${mtAba===k?'bg-zinc-900 text-white border-zinc-900':'bg-white text-zinc-600 hover:bg-zinc-50'}">${l}</button>`).join('');
+  $('mtTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ mtAba=b.dataset.a; renderMeta(); });
+  const cn = Object.keys(M.canais), linhas = [...SEGS.filter(k=>M.matriz.leads[k]), 'Total'];
+  const fmtv = v => mtAba==='faturamento'||mtAba==='tmf' ? (v ? v.toLocaleString('pt-BR',{maximumFractionDigits:0}) : '–') : mtAba==='conversao' ? (v===null?'–':(v*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%') : fmt(v);
+  let mh = `<tr><th class="${th} !text-left">${mtAba==='faturamento'||mtAba==='tmf'?'R$':''}</th>${cn.map(c=>`<th class="${th}"><span class="inline-flex items-center gap-1.5 justify-end">${logo(M.canais[c])}${c}</span></th>`).join('')}<th class="${th} !text-zinc-900">Total</th></tr>`;
+  for(const k of linhas){
+    let vals;
+    if(mtAba==='realizado'){
+      vals = cn.map(c=>{ const x = rows.filter(r=>r[C.canal]===M.canais[c] && (k==='Total'||r[C.seg]===k)); return sum(x,'l'); });
+      vals.push(k==='Total' ? L : bySeg(k));
+      const metaRow = M.matriz.leads[k];
+      mh += `<tr class="${k==='Total'?'bg-zinc-50 font-bold':''}"><td class="${td} !text-left font-semibold text-zinc-900 whitespace-nowrap">${k}</td>${vals.map((v,i)=>{ const m=metaRow[i]; const p=m?v/m:null; return `<td class="${td}"><b class="text-zinc-900">${fmt(v)}</b><span class="text-zinc-400"> / ${fmt(m)}</span><div class="text-[10px] ${p===null?'text-zinc-300':p>=1?'text-emerald-600':'text-zinc-500'}">${p===null?'–':(p*100).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%'}</div></td>`; }).join('')}</tr>`;
+      continue;
+    }
+    vals = mtAba==='conversao' ? M.matriz.leads[k].map((l,i)=> l ? M.matriz.compradores[k][i]/l : null) : M.matriz[mtAba][k];
+    mh += `<tr class="${k==='Total'?'bg-zinc-50 font-bold':''}"><td class="${td} !text-left font-semibold text-zinc-900 whitespace-nowrap">${k==='Total'?'Total':k}</td>${vals.map((v,i)=>`<td class="${td} ${i===vals.length-1?'font-bold text-zinc-900':'text-zinc-700'}">${fmtv(v)}</td>`).join('')}</tr>`;
   }
+  $('mtMatriz').innerHTML = mh;
+
+  // DRE
+  const linha = (l,v,cls,sub) => `<div class="flex items-center justify-between py-2.5 border-b last:border-0 ${sub?'':''}"><span class="text-[12px] ${cls.includes('font-bold')?'font-bold text-zinc-900':'text-zinc-600'}">${l}</span><span class="text-[13px] tabnum ${cls}">${v}</span></div>`;
+  $('mtDre').innerHTML = [
+    linha('Faturamento', brl(fat,2), 'font-semibold text-zinc-900'),
+    linha('Faturamento sem track', brl(M.faturamento_strack,2), 'font-semibold text-zinc-900'),
+    linha('Faturamento total', brl(fatTot,2), 'font-bold text-amber-600'),
+    linha(`Taxas (${pct(M.taxas_pct,1,0)})`, '− '+brl(taxas,2), 'text-red-500 font-semibold'),
+    linha('Disparos + Aw Sales', '− '+brl(M.disparos,2), 'text-red-500 font-semibold'),
+    linha('SMS Flash + Ligação', '− '+brl(M.sms_ligacao,2), 'text-red-500 font-semibold'),
+    linha('Resultado em margem', brl(margem,2), 'font-bold text-emerald-600'),
+    linha(`Imposto (${pct(M.imposto_pct,1,0)})`, '− '+brl(imposto,2), 'text-red-500 font-semibold'),
+    `<div class="flex items-center justify-between mt-3 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3"><span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Resultado real</span><span class="text-[20px] font-bold text-emerald-600 tabnum">${brl(real,2)}</span></div>`
+  ].join('');
+
+  // funil
+  $('mtFunDesc').innerHTML = `Projeção recalculada sobre os números aferidos do evento: <b class="text-zinc-900">${fmt(leadsR)} leads captados</b>, <b class="text-zinc-900">${fmt(showupR)} ao vivo</b> e <b class="text-zinc-900">${fmt(ap1R)} aplicações únicas no 1º dia</b>. Conversão de <b class="text-zinc-900">${pct(F.vendas_lead_pct,1,1)}</b> sobre leads.`;
+  $('mtMargem').textContent = brl(mgR);
+  const AF = '<span class="ml-1.5 align-middle inline-block rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">aferido</span>';
+  const gc = 'grid grid-cols-[158px_1fr_148px_176px] items-center gap-4';
+  const etapas = [
+    ['Leads',             metaLeads, 'meta de captação',                                 leadsR,  `${pct(leadsR,metaLeads,1)} da meta`,            '#3b82f6', F.leads_real?1:0],
+    ['Show-up',           showup,    `${pct(F.showup_pct,1,0)} dos leads de meta`,       showupR, `${pct(showupR,leadsR,1)} dos leads captados`,   '#6366f1', 1],
+    ['Aplicações 1º dia', ap1,       `${pct(F.aplic_dia1_pct,1,0)} do show-up`,          ap1R,    `${pct(ap1R,showupR,1)} do show real · únicas`, '#818cf8', 1],
+    ['Aplicações totais', ap,        `${pct(F.aplic_pct,1,0)} do show-up`,               apR,     `${pct(F.aplic_pct,1,0)} do show real`,          '#a78bfa', 0],
+    ['Vendas',            vendas,    `${pct(F.vendas_lead_pct,1,1)} dos leads de meta`,  vendasR, `${pct(vendasR,apR,1)} das aplicações totais`,   '#10b981', 0],
+    ['Vendas no cartão',  vc,        `${pct(F.cartao_pct,1,0)} das vendas`,              vcR,     `${pct(F.cartao_pct,1,0)} das vendas`,           '#34d399', 0],
+    ['Vendas no boleto',  vb,        `${pct(1-F.cartao_pct,1,0)} das vendas`,            vbR,     `${pct(1-F.cartao_pct,1,0)} das vendas`,         '#fb8c45', 0],
+  ];
+  $('mtFunil').innerHTML = `<div class="${gc} text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1.5 border-b"><span>Etapa</span><span></span><span class="text-right">Projeção da meta</span><span class="text-right">Real / reprojetado</span></div>`
+   + etapas.map(([n,v,d,r,dr,c,af])=>`<div class="${gc} text-[12px]">
+    <span class="font-semibold text-zinc-800">${n}</span>
+    <span class="h-7 bg-zinc-50 rounded overflow-hidden relative">
+      <i class="block h-full rounded" style="width:${Math.max(2,v/metaLeads*100)}%;background:${c};opacity:.22"></i>
+      <i class="absolute inset-y-0 left-0 rounded" style="width:${Math.max(2,Math.min(100,r/metaLeads*100))}%;background:${c}"></i></span>
+    <span class="text-right tabnum"><b class="text-[13px] font-semibold text-zinc-400">${fmt(v)}</b><div class="text-[10px] text-zinc-400">${d}</div></span>
+    <span class="text-right tabnum"><b class="text-[15px] ${r>=v?'text-emerald-600':'text-zinc-900'}">${fmt(r)}</b>${af?AF:''}<div class="text-[10px] text-zinc-500">${dr}</div></span></div>`).join('');
+  const box = (l,v,sub,cls) => `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-4"><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${l}</div><div class="text-[20px] font-bold ${cls} mt-1 tabnum">${v}</div><div class="text-[9.5px] text-zinc-500 mt-1 tabnum">${sub}</div></div>`;
+  $('mtFunFin').innerHTML = box('Faturamento cartão', brl(fcR), `com a meta de leads ${brl(fc)}`, 'text-zinc-900') + box('Faturamento boleto', brl(fbR), `com a meta de leads ${brl(fb)}`, 'text-zinc-900') + box('Faturamento geral', brl(fgR), `${pct(fgR,fg,0)} do cenário com a meta batida`, 'text-amber-500') + box(`Margem (${pct(F.margem_pct,1,0)})`, brl(mgR), `com a meta de leads ${brl(mg)}`, 'text-emerald-600');
 }
 
-const vendas = (vendasRows.length || Object.keys(DIAG).length) ? {
-  cols: ['dia','plat','origem','consultor','cluster','canal','prio','pagto','utm','bruto','liq','contratado'],
-  rows: vendasRows,
-  aplic: {
-    cols: ['dia','cluster','canal','prio','completa','n'],
-    rows: Object.entries(aplicAgg).map(([k,n]) => { const p = k.split('|'); return [p[0], p[1], p[2], p[3], +p[4], n]; }),
-  },
-  aplic_total: apTotal,
-  aplic_completas: apComp,
-  compradores: compradores.size,
-  leads_fecharam: compradores.size - semMatch,
-  sem_match: semMatch,
-  inicio_campanha: INICIO_CAMPANHA,
-  versao: VERSAO_CODE,
-  diag: DIAG,
-} : null;
+// ======== ABA VENDAS ========
+// Contrato esperado do n8n em DATA.vendas:
+//   cols: ['dia','plat','origem','consultor','cluster','canal','prio','pagto','bruto','liq','contratado']
+//   rows: uma linha por TRANSAÇÃO PAGA (sem nome/e-mail/telefone)
+//     dia        ISO 'aaaa-mm-dd'
+//     plat       'assiny' | 'hotmart' | 'tmb'
+//     origem     'awsales' | 'comercial' | 'outro'
+//     consultor  nome, ou '—' quando não houver
+//     cluster    'Aluno 7d'|'Aluno 14d'|'Aluno 30d'|'Aluno antigo'|'Não aluno'|'Sem match'
+//     canal      utm_source da INSCRIÇÃO do lead (cruzado pela base de leads)
+//     prio       'P1' | 'P2' | 'P3' | '—'
+//     pagto      'cartao' | 'boleto' | 'pix' | '—'
+//     bruto      R$ já em caixa nesta transação (para TMB = a entrada)
+//     liq        R$ bruto menos as taxas da plataforma
+//     contratado R$ total do contrato (TMB = valor nominal; demais = bruto)
+//   aplic: { cols:['cluster','canal','prio','completa','n'], rows:[...] }  // completa = 1|0
+//   leads_fecharam, sem_match, nominal_tmb
+// ======== PACING CONTRA A META ========
+// Distribui a meta ao longo da janela: boom no 1º dia e queda geométrica
+// nos seguintes. Devolve a fatia de cada dia, somando 1.
+function curvaMeta(n, d1, r){
+  if(n <= 1) return [1];
+  d1 = Math.min(0.95, Math.max(0.05, d1));
+  const resto = 1 - d1, m = n - 1;
+  const pesos = Array.from({length:m}, (_,i)=>Math.pow(r, i));
+  const soma = pesos.reduce((a,b)=>a+b, 0) || 1;
+  return [d1, ...pesos.map(p => resto*p/soma)];
+}
+const PACE_METRICAS = [
+  { k:'vendas', rot:'Vendas',       money:false },
+  { k:'cash',   rot:'Faturamento',  money:true  },
+  { k:'aplic',  rot:'Aplicações',   money:false },
+];
+function renderPace(V, K, vs, apRows, AK){
+  const F = META.funil, PV = META.periodo_vendas || {};
+  const CV = META.curva_meta || { vendas:{d1:.62}, cash:{d1:.62}, aplic:{d1:.72}, decaimento:.5 };
+  const metaLeadsN = META.matriz.leads.Total.at(-1);
+  const leadsR  = F.leads_real || sum(rows,'l') || metaLeadsN;
+  const showupR = F.showup_real || Math.floor(metaLeadsN * F.showup_pct);
 
-return [{ json: {
-  alunos_base,
-  campanha: CAMPANHA,
-  atualizado_em: new Date().toISOString(),
-  removidos,
-  cols: ['dia', 'canal', 'seg', 'faixa', ...METRICAS],
-  rows: Object.values(agg),
-  cols_disp: ['dia', 'canal', 'content', 'l', 'g', 'na', 'resp', 'ab'],
-  rows_disp: Object.values(aggDisp),
-  grupos: Object.fromEntries(Object.entries(porGrupo).sort((a, b) => a[0].localeCompare(b[0], 'pt-BR', { numeric: true }))),
-  grupos_total: Object.values(porGrupo).reduce((a, b) => a + b, 0),
-  vendas,
-}}];
+  // metas, derivadas do mesmo funil da aba Meta
+  const mVendas = Math.round(leadsR * F.vendas_lead_pct);
+  const vcM = Math.round(mVendas * F.cartao_pct), vbM = mVendas - vcM;
+  const mCash  = vcM * F.ticket_cartao + vbM * F.ticket_boleto;
+  const mNom   = vcM * F.ticket_cartao + vbM * (F.ticket_nominal || F.ticket_boleto);
+  const mAplic = Math.round(showupR * F.aplic_pct);
+  const METAS  = { vendas:mVendas, cash:mCash, aplic:mAplic };
+  // totais de tudo que veio das abas, para conferir contra o que cai na janela
+  const TOTAIS = {
+    vendas: vs.length,
+    cash:   vs.reduce((a,r)=>a+r[K.bruto],0),
+    aplic:  apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0),
+  };
+
+  // janela
+  const diasV = [...new Set(vs.map(r=>r[K.dia]).filter(Boolean))].sort();
+  const diasA = apRows.length ? [...new Set(apRows.map(r=>r[AK.dia]).filter(Boolean))].sort() : [];
+  const ini = PV.inicio || [...diasV, ...diasA].sort()[0] || META.data_evento;
+  const fim = (PV.fim && PV.fim >= ini) ? PV.fim : (diasV.at(-1) || ini);
+  const ag = new Date(); const hojeISO = new Date(ag.getTime()-ag.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const corte = hojeISO > fim ? fim : hojeISO < ini ? ini : hojeISO;
+  const dd = (a,b) => Math.round((new Date(b) - new Date(a))/86400000);
+  const totalDias = Math.max(1, dd(ini,fim) + 1);
+  const decorridos = Math.max(1, dd(ini,corte) + 1);
+  const restantes = Math.max(0, totalDias - decorridos);
+  const dias = []; for(let i=0;i<totalDias;i++){ const d=new Date(ini); d.setDate(d.getDate()+i); dias.push(d.toISOString().slice(0,10)); }
+
+  // séries diárias
+  const temDataAplic = diasA.length > 0;
+  const totAplicComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
+  const serie = {
+    vendas: dias.map(d=>vs.filter(r=>r[K.dia]===d).length),
+    cash:   dias.map(d=>vs.filter(r=>r[K.dia]===d).reduce((a,r)=>a+r[K.bruto],0)),
+    aplic:  temDataAplic
+      ? dias.map(d=>apRows.filter(r=>r[AK.dia]===d && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0))
+      // sem coluna de data na aba Aplicações: tudo cai no primeiro dia, para o total continuar certo
+      : dias.map((_,i)=> i===0 ? totAplicComp : 0),
+  };
+
+  $('vnPaceDias').textContent = hojeISO > fim ? 'encerrado' : fmt(restantes);
+  $('vnPaceSub').innerHTML = `Janela de ${ddmm(ini)} a ${ddmm(fim)} · <b class="text-zinc-900">dia ${fmt(decorridos)} de ${fmt(totalDias)}</b>. Metas do funil da aba Meta (${pct(F.vendas_lead_pct,1,1)} sobre ${fmt(leadsR)} leads), distribuídas numa régua de lançamento: <b class="text-zinc-900">${pct(CV.cash.d1,1,0)} no 1º dia</b> e cada dia seguinte valendo ${pct(CV.decaimento,1,0)} do anterior.`;
+
+  // ---- cards
+  $('vnPaceCards').innerHTML = PACE_METRICAS.map(({k,rot,money})=>{
+    const meta = METAS[k], feito = serie[k].reduce((a,b)=>a+b,0);
+    const v = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
+    const fatias = curvaMeta(totalDias, CV[k].d1, CV.decaimento);
+    const esperado = meta * fatias.slice(0, decorridos).reduce((a,b)=>a+b, 0);
+    const falta = Math.max(0, meta - feito);
+    const precisa = restantes ? falta / restantes : falta;
+    // projeção pela curva: se hoje deveríamos ter X% do total, o fechamento é feito ÷ X%
+    const fatiaAcum = fatias.slice(0, decorridos).reduce((a,b)=>a+b, 0) || 1;
+    const projecao = feito / fatiaAcum;
+    const bateu = feito >= meta, noRitmo = feito >= esperado;
+    const c = bateu ? ['border-emerald-200 bg-emerald-50/60','text-emerald-700','meta batida']
+            : noRitmo ? ['border-emerald-100 bg-emerald-50/40','text-emerald-700','no ritmo']
+            : ['border-red-100 bg-red-50/40','text-red-600','atrasado'];
+    return `<div class="rounded-lg border ${c[0]} p-5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">${rot}</div>
+        <span class="text-[9px] font-bold uppercase tracking-wider ${c[1]}">${c[2]}</span></div>
+      <div class="text-[23px] font-bold text-zinc-900 mt-1.5 tabnum">${v(feito)}</div>
+      <div class="text-[10.5px] text-zinc-500">de ${v(meta)} · <b class="${c[1]}">${pct(feito,meta,0)}</b>${k==='cash'?` · nominal ${brl(mNom)}`:''}</div>
+      <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t">
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Fazendo por dia</div>
+          <div class="text-[14px] font-bold text-zinc-900 tabnum">${v(feito/decorridos)}</div></div>
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">${restantes?'Precisa por dia':'Falta'}</div>
+          <div class="text-[14px] font-bold ${falta?c[1]:'text-emerald-600'} tabnum">${falta?v(precisa):'–'}</div></div></div>
+      <div class="text-[10px] text-zinc-500 mt-2.5">${bateu ? `Passou a meta em <b class="text-emerald-600">${v(feito-meta)}</b>.`
+        : restantes ? `Mantido o padrão de lançamento, fecha em <b class="text-zinc-800">${v(projecao)}</b>, ${pct(projecao,meta,0)} da meta.`
+        : `Fechou ${v(falta)} abaixo da meta.`}</div></div>`;
+  }).join('');
+
+  // ---- três gráficos: previsto x realizado, dia a dia
+  const COR_PREV = '#c7d2fe', COR_PREV_B = '#a5b4fc', COR_OK = '#10b981', COR_ATRAS = '#ef4444';
+  $('vnPaceCharts').innerHTML = PACE_METRICAS.map(({k,rot,money})=>{
+    const meta = METAS[k], dL = serie[k];
+    const cum = []; dL.reduce((a,x,i)=>(cum[i]=a+x),0);
+    const fatias = curvaMeta(totalDias, CV[k].d1, CV.decaimento);
+    const metaDia = fatias.map(f=>meta*f);
+    const metaCum = []; metaDia.reduce((a,x,i)=>(metaCum[i]=a+x),0);
+    const v  = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
+    const kv = money ? (x=> x>=1000 ? 'R$ '+(x/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(x)) : (x=>fmt(Math.round(x)));
+    // desenha até hoje, ou até o último dia que tem dado — nada de linha
+    // datada à frente sumir do gráfico e do total.
+    let ultimoDado = -1; dL.forEach((x,i)=>{ if(x) ultimoDado = i; });
+    const ultimo = Math.min(totalDias-1, Math.max(0, dd(ini,corte), ultimoDado));
+    const n = totalDias, W = 1000, H = 300, topo = 66, base = 236;
+    const grupo = W/n, bw = Math.min(46, Math.max(12, grupo*0.3)), gi = Math.min(12, bw*0.28);
+    const max = Math.max(...cum, ...metaCum) || 1, h = val => (val/max)*(base-topo);
+    let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px;font-family:Inter,sans-serif" role="img" aria-label="Pacing de ${rot}">`;
+    g += `<rect x="0" y="6" width="9" height="9" rx="2" fill="${COR_PREV}" stroke="${COR_PREV_B}"/><text x="14" y="14" font-size="9.5" font-weight="600" fill="#52525b">previsto</text>`;
+    g += `<rect x="72" y="6" width="9" height="9" rx="2" fill="${COR_OK}"/><text x="86" y="14" font-size="9.5" font-weight="600" fill="#52525b">realizado no pace</text>`;
+    g += `<rect x="208" y="6" width="9" height="9" rx="2" fill="${COR_ATRAS}"/><text x="222" y="14" font-size="9.5" font-weight="600" fill="#52525b">realizado abaixo</text>`;
+    dias.forEach((d,i)=>{
+      const cx = i*grupo + grupo/2, xP = cx - gi/2 - bw, xR = cx + gi/2;
+      const futuro = i > ultimo;
+      if(i%2) g += `<rect x="${i*grupo}" y="26" width="${grupo}" height="${base-26}" fill="#fafafa"/>`;
+      const hP = h(metaCum[i]);
+      g += `<rect x="${xP}" y="${base-hP}" width="${bw}" height="${hP}" rx="2" fill="${COR_PREV}" stroke="${COR_PREV_B}"><title>${ddmm(d)} · previsto acumulado ${v(metaCum[i])} · +${v(metaDia[i])} no dia</title></rect>`;
+      g += `<text x="${xP+bw/2}" y="${base-hP-6}" text-anchor="middle" font-size="10" font-weight="700" fill="#6366f1">${kv(metaCum[i])}</text>`;
+      if(futuro){
+        g += `<rect x="${xR}" y="${base-12}" width="${bw}" height="12" rx="2" fill="#f4f4f5"/>`;
+      } else {
+        const ok = cum[i] >= metaCum[i], hR2 = h(cum[i]), cor = ok ? COR_OK : COR_ATRAS;
+        g += `<rect x="${xR}" y="${base-hR2}" width="${bw}" height="${hR2}" rx="2" fill="${cor}"><title>${ddmm(d)} · realizado ${v(cum[i])} · +${v(dL[i])} no dia · ${ok?'acima':'abaixo'} do previsto em ${v(Math.abs(cum[i]-metaCum[i]))}</title></rect>`;
+        g += `<text x="${xR+bw/2}" y="${base-hR2-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${ok?'#047857':'#b91c1c'}">${kv(cum[i])}</text>`;
+        if(dL[i]) g += `<text x="${xR+bw/2}" y="${base-hR2-19}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#f97316">+${kv(dL[i])}</text>`;
+      }
+      g += `<text x="${cx}" y="${base+19}" text-anchor="middle" font-size="11" font-weight="700" fill="${i===ultimo?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+      g += `<text x="${cx}" y="${base+33}" text-anchor="middle" font-size="9" fill="#a1a1aa">${futuro?`previsto +${kv(metaDia[i])}`:`+${kv(dL[i])} de +${kv(metaDia[i])}`}</text>`;
+    });
+    g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
+    const feito = dL.reduce((a,b)=>a+b,0);              // mesmo número do card
+    const hojeIdx = Math.min(totalDias-1, Math.max(0, dd(ini,corte)));
+    const esp = metaCum[hojeIdx], atras = feito < esp;
+    const foraDaJanela = TOTAIS[k] - feito;
+    return `<div>
+      <div class="flex items-end justify-between flex-wrap gap-2 border-b pb-2 mb-3">
+        <div class="text-[13px] font-bold text-zinc-900">${rot}</div>
+        <div class="text-[11px] tabnum"><span class="text-zinc-500">acumulado</span> <b class="text-zinc-900">${v(feito)}</b> <span class="text-zinc-400">·</span> <span class="text-zinc-500">previsto</span> <b class="text-zinc-900">${v(esp)}</b> <span class="text-zinc-400">·</span> <b class="${atras?'text-red-600':'text-emerald-600'}">${atras?`${v(esp-feito)} abaixo`:`${v(feito-esp)} acima`}</b></div>
+      </div>
+      ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3"><b>A aba Aplicações não tem coluna de data.</b> Por isso as ${fmt(totAplicComp)} aplicações caem todas no primeiro dia e os dias seguintes repetem o mesmo acumulado. Adicione a coluna de data na aba que a curva se distribui sozinha.</p>`:''}
+      ${Math.abs(foraDaJanela) > (k==='cash' ? 1 : 0.5) ? `<p class="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3"><b>${v(Math.abs(foraDaJanela))} ${foraDaJanela>0?'de fora da janela':'a mais que o total'}.</b> ${foraDaJanela>0?`Há registros com data fora de ${ddmm(ini)}–${ddmm(fim)}. Ajuste <code>periodo_vendas</code> ou confira a coluna de data.`:'Confira a janela configurada.'}</p>`:''}
+      <div class="overflow-x-auto">${g}</div></div>`;
+  }).join('');
+}
+
+function renderVen(){
+  const box = $('vnStats'), V = DATA.vendas;
+  if(!V || !V.rows || !V.rows.length){
+    const aviso = `<div class="col-span-full rounded-lg border border-dashed p-5 text-[12px] text-muted-foreground">Sem dados de vendas. Adicione no n8n os nós <b>Base Assiny</b>, <b>Base Hotmart</b>, <b>Base TMB</b> e <b>Aplicações</b>, e publique o bloco <code>vendas</code> na resposta do webhook.</div>`;
+    box.innerHTML = aviso;
+    ['vnCash','vnLiq','vnGer','vnConv'].forEach(i=>$(i).textContent='–');
+    ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
+    $('vnBest').textContent = '–'; $('vnChart').innerHTML = ''; $('vnChartAviso').innerHTML = '';
+    $('vnPagBar').innerHTML = '';
+    $('vnPaceCards').innerHTML = '<p class="col-span-full text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
+    $('vnPaceCharts').innerHTML = '';
+    $('vnPaceSub').textContent = ''; $('vnPaceDias').textContent = '–';
+    ['vnPag','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML='<tr><td class="py-4 text-[12px] text-muted-foreground">Aguardando as abas de transação.</td></tr>');
+    $('vnOrig').innerHTML = '<p class="text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
+    return;
+  }
+  const K = {}; V.cols.forEach((c,i)=>K[c]=i);
+  // TRAVA DE DATA FUTURA — o painel nunca contabiliza nada depois de hoje,
+  // venha o que vier das abas. Qualquer linha datada à frente é lançada hoje.
+  const _ag = new Date();
+  const HOJE = new Date(_ag.getTime()-_ag.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  let nFuturas = 0, diaFuturo = '';
+  const vs = V.rows.map(r=>{
+    if(r[K.dia] && r[K.dia] > HOJE){ nFuturas++; if(r[K.dia] > diaFuturo) diaFuturo = r[K.dia];
+      const c = r.slice(); c[K.dia] = HOJE; return c; }
+    return r;
+  });
+  const L = sum(rows,'l');
+  const S  = (rs,k) => rs.reduce((a,r)=>a+(+r[K[k]]||0),0);
+  const by = (rs,k) => { const m={}; for(const r of rs){ (m[r[K[k]]] ||= []).push(r); } return m; };
+
+  const cash = S(vs,'bruto'), liq = S(vs,'liq'), ger = S(vs,'contratado');
+  const taxas = cash - liq, receber = ger - cash, nv = vs.length;
+  const fecharam = V.leads_fecharam ?? nv;
+
+  // ---- aplicações
+  const A = V.aplic, AK = {}; let apTot=0, apComp=0, apRows=[];
+  if(A && A.rows){ A.cols.forEach((c,i)=>AK[c]=i);
+    apRows = A.rows.map(r=>{
+      if(r[AK.dia] && r[AK.dia] > HOJE){ nFuturas++; if(r[AK.dia] > diaFuturo) diaFuturo = r[AK.dia];
+        const c = r.slice(); c[AK.dia] = HOJE; return c; }
+      return r;
+    });
+    apTot  = apRows.reduce((a,r)=>a+(+r[AK.n]||0),0);
+    apComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0); }
+  const apInc = apTot - apComp;
+
+  renderPace(V, K, vs, apRows, AK);
+
+  // ---- cards
+  const porPlat = by(vs,'plat');
+  const nomePlat = { assiny:'Assiny', hotmart:'Hotmart', tmb:'TMB' };
+  $('vnCash').textContent = brl(cash);
+  $('vnCashSub').innerHTML = ['assiny','hotmart','tmb'].filter(p=>porPlat[p])
+    .map(p=>`${nomePlat[p]} ${brl(S(porPlat[p],'bruto'))}`).join(' · ') || '—';
+  $('vnLiq').textContent = brl(liq);
+  $('vnLiqSub').textContent = `${brl(taxas)} em taxas (${pct(taxas,cash)} do bruto)`;
+  $('vnGer').textContent = brl(ger);
+  $('vnGerSub').textContent = receber > 0 ? `${brl(receber)} ainda a receber (boleto e saldo TMB)` : 'tudo já em caixa';
+  const compradores = V.compradores ?? fecharam;
+  $('vnConv').textContent = pct(compradores,L,2);
+  $('vnConvSub').textContent = `${fmt(compradores)} compradores únicos em ${fmt(L)} leads · ${fmt(nv)} transaç${nv===1?'ão':'ões'}`;
+
+  const stat = (lbl,val,sub,cls='text-zinc-900') => `<div class="rounded-lg border bg-white p-4">
+    <div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${lbl}</div>
+    <div class="text-[22px] font-bold ${cls} mt-1 tabnum">${val}</div>
+    <div class="text-[9.5px] text-muted-foreground mt-1">${sub}</div></div>`;
+  const cardAplic = `<div class="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4">
+    <div class="text-[9px] font-bold uppercase tracking-wider text-indigo-700">Aplicações recebidas</div>
+    <div class="text-[22px] font-bold text-indigo-700 mt-1 tabnum">${fmt(apTot)}</div>
+    <div class="flex h-1.5 rounded-full overflow-hidden bg-white border border-indigo-100 mt-2">
+      <i class="block h-full bg-indigo-600" style="width:${apTot?apComp/apTot*100:0}%"></i>
+      <i class="block h-full bg-indigo-200" style="width:${apTot?apInc/apTot*100:0}%"></i></div>
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-indigo-700">Completas</div>
+        <div class="text-[15px] font-bold text-indigo-700 tabnum">${fmt(apComp)}<span class="text-[10px] font-semibold text-indigo-400 ml-1">${apTot?pct(apComp,apTot,0):'–'}</span></div></div>
+      <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Incompletas</div>
+        <div class="text-[15px] font-bold text-zinc-500 tabnum">${fmt(apInc)}<span class="text-[10px] font-semibold text-zinc-400 ml-1">${apTot?pct(apInc,apTot,0):'–'}</span></div></div>
+    </div></div>`;
+  box.innerHTML =
+      stat('Vendas confirmadas', fmt(nv), `${fmt(compradores)} compradores únicos${nv!==compradores?` · ${fmt(nv-compradores)} compraram mais de uma vez`:''}${(V.sem_match||0)?` · ${fmt(V.sem_match)} sem match na base`:''}`)
+    + cardAplic
+    + stat('Aplicação → venda', apComp ? pct(compradores,apComp) : '–', apComp ? `${fmt(compradores)} compradores de ${fmt(apComp)} fichas completas` : 'aguardando a aba Aplicações', 'text-emerald-600')
+    + stat('Ticket médio bruto', brl(nv?cash/nv:0), `${brl(nv?ger/nv:0)} de ticket contratado`, 'text-amber-500');
+
+  // ---- gráfico: barras de vendas + linha de faturamento
+  const dias = [...new Set(vs.map(r=>r[K.dia]))].sort();
+  const dN = dias.map(d=>vs.filter(r=>r[K.dia]===d).length);
+  const dR = dias.map(d=>S(vs.filter(r=>r[K.dia]===d),'bruto'));
+  const iBest = dR.indexOf(Math.max(...dR));
+  $('vnBest').textContent = dias.length ? `${dm(dias[iBest])} · ${brl(dR[iBest])}` : '–';
+  $('vnChartSub').textContent = `${fmt(nv)} vendas e ${brl(cash)} em caixa entre ${ddmm(dias[0])} e ${ddmm(dias.at(-1))}.`;
+  const PLAT = [['assiny','Assiny','#6366f1'],['hotmart','Hotmart','#8b5cf6'],['tmb','TMB','#f59e0b']];
+  const presentes = PLAT.filter(([k])=>vs.some(r=>r[K.plat]===k));
+  // Por dia, um par de colunas: vendas (sólida) e faturamento (clara),
+  // as duas empilhadas pelas mesmas cores de plataforma.
+  const n = dias.length, W = 1000, H = 318, topo = 74, base = 252;
+  const grupo = W / n;
+  const bw = Math.min(54, Math.max(14, grupo * 0.3));
+  const gi = Math.min(16, bw * 0.3);
+  const maxN = Math.max(...dN,1), maxR = Math.max(...dR,1);
+  const hN = q => (q/maxN)*(base-topo), hR = v => (v/maxR)*(base-topo);
+  const kbrl = v => v >= 1000 ? 'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(v);
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px;font-family:Inter,sans-serif" role="img" aria-label="Vendas e faturamento por plataforma, por dia">`;
+  let lx = 0;
+  for(const [,nome,cor] of presentes){ g += `<rect x="${lx}" y="8" width="9" height="9" rx="2" fill="${cor}"/><text x="${lx+13}" y="16" font-size="9.5" font-weight="600" fill="#52525b">${nome}</text>`; lx += 26 + nome.length*5.9; }
+  g += `<rect x="${lx+6}" y="8" width="9" height="9" rx="2" fill="#71717a"/><text x="${lx+19}" y="16" font-size="9.5" fill="#71717a">barra sólida = vendas</text>`;
+  g += `<rect x="${lx+150}" y="8" width="9" height="9" rx="2" fill="#71717a" opacity=".45"/><text x="${lx+163}" y="16" font-size="9.5" fill="#71717a">barra clara = faturamento</text>`;
+  dias.forEach((d,i)=>{
+    const cxG = i*grupo + grupo/2;
+    const xA = cxG - gi/2 - bw, xB = cxG + gi/2;
+    const rsD = vs.filter(r=>r[K.dia]===d);
+    if(i%2) g += `<rect x="${i*grupo}" y="30" width="${grupo}" height="${base-30}" fill="#fafafa"/>`;
+    let accN = 0, accR = 0;
+    for(const [k,nome,cor] of presentes){
+      const rsP = rsD.filter(r=>r[K.plat]===k), q = rsP.length; if(!q) continue;
+      const val = rsP.reduce((a,r)=>a+r[K.bruto],0);
+      const hA = hN(q), yA = base - hN(accN) - hA;
+      g += `<rect x="${xA}" y="${yA}" width="${bw}" height="${hA}" fill="${cor}"><title>${ddmm(d)} · ${nome}: ${fmt(q)} vendas</title></rect>`;
+      if(hA > 16) g += `<text x="${xA+bw/2}" y="${yA+hA/2+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${fmt(q)}</text>`;
+      const hB = hR(val), yB = base - hR(accR) - hB;
+      g += `<rect x="${xB}" y="${yB}" width="${bw}" height="${hB}" fill="${cor}" opacity=".45"><title>${ddmm(d)} · ${nome}: ${brl(val)}</title></rect>`;
+      if(hB > 16) g += `<text x="${xB+bw/2}" y="${yB+hB/2+4}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#3f3f46">${kbrl(val)}</text>`;
+      accN += q; accR += val;
+    }
+    const yTopo = base - Math.max(hN(dN[i]), hR(dR[i])) - 10;
+    g += `<text x="${xA+bw/2}" y="${yTopo}" text-anchor="middle" font-size="13" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
+    g += `<text x="${xB+bw/2}" y="${yTopo}" text-anchor="middle" font-size="13" font-weight="700" fill="#059669">${kbrl(dR[i])}</text>`;
+    g += `<text x="${xA+bw/2}" y="${yTopo-13}" text-anchor="middle" font-size="8" font-weight="700" fill="#a1a1aa" letter-spacing=".06em">VENDAS</text>`;
+    g += `<text x="${xB+bw/2}" y="${yTopo-13}" text-anchor="middle" font-size="8" font-weight="700" fill="#a1a1aa" letter-spacing=".06em">FATURAM.</text>`;
+    g += `<text x="${cxG}" y="${base+20}" text-anchor="middle" font-size="11" font-weight="700" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+    g += `<text x="${cxG}" y="${base+34}" text-anchor="middle" font-size="9" fill="#a1a1aa">${fmt(dN[i])} vendas · ${kbrl(dR[i])}</text>`;
+  });
+  g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
+  $('vnChart').innerHTML = g;
+  // aviso da trava de data futura
+  $('vnChartAviso').innerHTML = nFuturas
+    ? `<div class="mt-4 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <b>${fmt(nFuturas)} registro${nFuturas>1?'s vinham':' vinha'} com data futura (até ${ddmm(diaFuturo)}) e ${nFuturas>1?'foram lançados':'foi lançado'} em hoje.</b>
+        <br><span class="text-amber-700">A coluna de data de alguma aba está trazendo vencimento em vez de pagamento. Confira no rodapé qual coluna cada aba usou.</span></div>`
+    : '';
+
+  // ---- helpers de tabela
+  const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b';
+  const td = 'text-right py-2.5 px-3 border-b';
+  const head = cs => `<tr>${cs.map((c,i)=>`<th class="${th} ${i?'':'!text-left'}">${c}</th>`).join('')}</tr>`;
+  const barra = (v,m,cor) => `<span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden inline-block align-middle"><i class="block h-full" style="width:${m?Math.min(100,v/m*100):0}%;background:${cor}"></i></span>`;
+
+  // ---- origem awsales x comercial (dois blocos, com a quebra por utm_source)
+  // Regra: utm_source contendo "awsales" vai para AwSales; TODO o resto, inclusive
+  // venda sem utm, vai para Comercial. A lista abaixo de cada bloco mostra de onde
+  // veio cada venda, para auditar a atribuição.
+  const rsAw  = vs.filter(r=>r[K.origem]==='awsales');
+  const rsCom = vs.filter(r=>r[K.origem]!=='awsales');
+  const quebraUtm = rs => {
+    const m = {}; for(const r of rs){ const u = txtU(r[K.utm]); (m[u] ||= []).push(r); }
+    return Object.entries(m).sort((a,b)=>b[1].length-a[1].length);
+  };
+  const bloco = (titulo, rs, cor, bg, borda) => { const c = S(rs,'bruto'), q = quebraUtm(rs);
+    return `<div class="rounded-lg border ${borda} ${bg} p-5">
+      <div class="text-[9.5px] font-bold uppercase tracking-wider ${cor}">${titulo}</div>
+      <div class="text-[24px] font-bold ${cor} mt-1.5 tabnum">${brl(c)}</div>
+      <div class="h-1.5 rounded-full bg-white/70 overflow-hidden mt-2"><i class="block h-full" style="width:${pctN(c,cash)}%;background:currentColor"></i></div>
+      <div class="grid grid-cols-3 gap-2 mt-3">
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Vendas</div><div class="text-[16px] font-bold text-zinc-900 tabnum">${fmt(rs.length)}</div></div>
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">% do caixa</div><div class="text-[16px] font-bold text-zinc-900 tabnum">${pct(c,cash,0)}</div></div>
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Ticket</div><div class="text-[16px] font-bold text-zinc-900 tabnum">${rs.length?brl(c/rs.length):'–'}</div></div>
+      </div>
+      <div class="mt-3 pt-3 border-t border-white/60">
+        <div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Por utm_source</div>
+        ${q.length ? q.map(([u,rr])=>`<div class="flex items-baseline justify-between gap-3 text-[11px] py-[3px]">
+            <span class="text-zinc-700 truncate">${u==='—'?'<i class="text-zinc-400 not-italic">sem utm_source</i>':u}</span>
+            <span class="tabnum whitespace-nowrap"><b class="text-zinc-900">${fmt(rr.length)}</b> <span class="text-zinc-400">venda${rr.length>1?'s':''}</span> <span class="text-zinc-300">·</span> <span class="text-zinc-600">${brl(S(rr,'bruto'))}</span></span>
+          </div>`).join('') : '<div class="text-[11px] text-zinc-400">sem vendas</div>'}
+      </div></div>`; };
+  $('vnOrig').innerHTML = `<div class="grid sm:grid-cols-2 gap-4">
+      ${bloco('AwSales · disparo', rsAw, 'text-indigo-700', 'bg-indigo-50/60', 'border-indigo-200')}
+      ${bloco('Comercial · time', rsCom, 'text-emerald-700', 'bg-emerald-50/60', 'border-emerald-200')}
+    </div>
+    <div class="mt-3 text-[11px] ${rsAw.length+rsCom.length===nv?'text-zinc-500':'text-red-600 font-semibold'}">
+      ${fmt(rsAw.length)} + ${fmt(rsCom.length)} = <b>${fmt(rsAw.length+rsCom.length)}</b> de ${fmt(nv)} vendas${rsAw.length+rsCom.length===nv?' · fecha com o total':' · NÃO fecha com o total'}.
+      Tudo que não tem "awsales" no utm_source cai em Comercial, inclusive venda sem utm.
+    </div>`;
+
+  // ---- forma de pagamento
+  const PAG = [['cartao','Cartão','#6366f1'],['pix','PIX','#10b981'],['cartaopix','Cartão / PIX','#818cf8'],['boleto','Boleto (TMB)','#fb8c45'],['—','Não informado','#a1a1aa']];
+  const pg = by(vs,'pagto');
+  t = head(['Forma','Vendas','% das vendas','Em caixa','% do caixa','Ticket']);
+  let barra2 = '';
+  for(const [k,nome,cor] of PAG){ const rs = pg[k]; if(!rs || !rs.length) continue;
+    const c = S(rs,'bruto');
+    barra2 += `<i class="block h-full" style="width:${rs.length/nv*100}%;background:${cor}" title="${nome}: ${fmt(rs.length)} vendas"></i>`;
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2"><i class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${cor}"></i>${nome}</span></td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td}">${barra(rs.length,nv,cor)} <b class="ml-1.5">${pct(rs.length,nv)}</b></td>
+      <td class="${td} font-semibold text-emerald-600">${brl(c)}</td>
+      <td class="${td} font-semibold">${pct(c,cash)}</td>
+      <td class="${td} text-zinc-600">${brl(c/rs.length)}</td></tr>`; }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold">100,0%</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold">100,0%</td><td class="${td} font-bold">${brl(cash/nv)}</td></tr>`;
+  $('vnPag').innerHTML = t;
+  $('vnPagBar').innerHTML = barra2;
+
+  // ---- cluster (cruzamento com a base de leads)
+  const CL = [...SEGS, 'Sem match'];
+  const apPorClus = k => apRows.filter(r=>r[AK.cluster]===k && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
+  $('vnClusSub').textContent = `Leads vêm da captação; vendas e aplicações são casadas por e-mail e telefone.${V.sem_match?` ${fmt(V.sem_match)} venda${V.sem_match>1?'s':''} sem par na base.`:''}`;
+  t = head(['Cluster','Leads','Aplicações','Vendas','Lead → venda','Aplic. → venda','Em caixa','Ticket']);
+  for(const k of CL){
+    const rs = vs.filter(r=>r[K.cluster]===k), lds = k==='Sem match' ? 0 : sum(rows.filter(r=>r[C.seg]===k),'l'), ap = apPorClus(k);
+    if(!rs.length && !lds && !ap) continue;
+    const c = S(rs,'bruto'), cv = lds ? rs.length/lds*100 : null;
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${k==='Sem match'?'':badge(k)}${k}</span></td>
+      <td class="${td} text-zinc-600">${lds?fmt(lds):'–'}</td><td class="${td} text-zinc-600">${fmt(ap)}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td}">${cv===null?'–':`${barra(cv,10,'#6366f1')} <b class="ml-1.5">${pct(rs.length,lds,2)}</b>`}</td>
+      <td class="${td} ${ap?'font-semibold':''}">${ap?pct(rs.length,ap):'–'}</td>
+      <td class="${td} font-semibold text-emerald-600">${brl(c)}</td><td class="${td} text-zinc-600">${rs.length?brl(c/rs.length):'–'}</td></tr>`;
+  }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(L)}</td><td class="${td} font-bold">${fmt(apComp)}</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold">${pct(fecharam,L,2)}</td><td class="${td} font-bold">${apComp?pct(fecharam,apComp):'–'}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold">${brl(cash/nv)}</td></tr>`;
+  $('vnClus').innerHTML = t;
+
+  // ---- canal de inscrição
+  const can = by(vs,'canal'), ordCa = Object.keys(can).sort((a,b)=>can[b].length-can[a].length);
+  t = head(['Canal','Leads','Vendas','Conversão','Em caixa']);
+  for(const k of ordCa){ const rs = can[k], lds = sum(rows.filter(r=>r[C.canal]===k),'l');
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${logo(k)}${k}</span></td>
+      <td class="${td} text-zinc-600">${lds?fmt(lds):'–'}</td><td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td} font-semibold ${lds?'':'text-zinc-400'}">${lds?pct(rs.length,lds,2):'–'}</td>
+      <td class="${td} font-semibold text-emerald-600">${brl(S(rs,'bruto'))}</td></tr>`; }
+  $('vnCanal').innerHTML = t;
+
+  // ---- plataforma
+  t = head(['Plataforma','Vendas','Bruto','Taxas','Líquido','A receber']);
+  for(const p of ['assiny','hotmart','tmb']){ const rs = porPlat[p]; if(!rs) continue;
+    const b = S(rs,'bruto'), l = S(rs,'liq'), ct = S(rs,'contratado');
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${nomePlat[p]}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td><td class="${td} font-semibold text-emerald-600">${brl(b)}</td>
+      <td class="${td} text-red-500">− ${brl(b-l)}</td><td class="${td} font-semibold text-zinc-900">${brl(l)}</td>
+      <td class="${td} ${ct-b>0?'text-amber-500 font-semibold':'text-zinc-400'}">${ct-b>0?brl(ct-b):'–'}</td></tr>`; }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold text-red-500">− ${brl(taxas)}</td><td class="${td} font-bold">${brl(liq)}</td><td class="${td} font-bold text-amber-500">${brl(receber)}</td></tr>`;
+  $('vnPlat').innerHTML = t;
+}
+function bindCanal(id){
+  $(id).querySelectorAll('[data-c]').forEach(tr=>{
+    const go=()=>{ $('fCanal').value = state.canal===tr.dataset.c ? '' : tr.dataset.c; apply(); };
+    tr.onclick=go; tr.onkeydown=e=>{ if(e.key==='Enter') go(); };
+  });
+}
+
+function setNote(){
+  const d = new Date(DATA.atualizado_em || Date.now());
+  $('note').className = 'text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed';
+  const vCode = (DATA.vendas && DATA.vendas.versao) || null;
+  let txt = `${VERSAO} · ${vCode || 'CODE NODE DO N8N DESATUALIZADO'}. Dados de ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}. ${DATA.removidos ? DATA.removidos+' linhas ignoradas (cadastros de teste ou data de inscrição inválida). ' : ''}Números a partir das colunas da BASE LEADS.`;
+  const dg = DATA.vendas && DATA.vendas.diag;
+  if(dg) txt += ' Coluna de data usada em cada aba — ' + Object.entries(dg)
+    .map(([t,x])=>`${t}: ${x.colunas && x.colunas.data ? x.colunas.data : 'NENHUMA ENCONTRADA'}`).join(' · ') + '.';
+  $('note').textContent = txt;
+}
+// Cache local: mostra a última leitura na hora e revalida por trás, para não
+// bater no n8n (e na cota do Google Sheets) a cada aba aberta ou F5.
+const CACHE_KEY = 'painel_captacao_cache';
+function lerCache(){
+  try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    return (c && c.ts && c.data) ? c : null; }catch(e){ return null; }
+}
+function gravarCache(data){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data})); }catch(e){}
+}
+let buscando = false;
+async function refresh(silencioso){
+  if(buscando) return; buscando = true;
+  try{
+    const r = await fetch(WEBHOOK_URL, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    gravarCache(data);
+    load(data); state = read(); route(); markDirty(); setNote(); carimbo();
+  }catch(e){
+    if(silencioso && rows){                       // já tem dados na tela: só avisa no rodapé
+      setNote();
+      $('note').innerHTML += ` <b class="text-amber-600">A última atualização falhou (${e.message}); os números acima são do cache.</b>`;
+    } else {
+      $('note').className = 'text-[12px] text-red-500 mt-8';
+      $('note').textContent = `Não foi possível ler os dados do n8n (${e.message}). Confira se o workflow está ativo e se WEBHOOK_URL está certa.`;
+    }
+  } finally { buscando = false; }
+}
+function carimbo(){ const e=$('ver'); if(!e) return;
+  const vc = (DATA && DATA.vendas && DATA.vendas.versao) || null;
+  e.innerHTML = VERSAO + (vc ? ` · <span class="text-zinc-400">${vc}</span>`
+    : ` · <b class="text-red-600">n8n desatualizado</b>`); }
+{ const e=$('ver'); if(e) e.textContent = VERSAO; }
+if(EMBED){ load(EMBED); state = read(); route(); markDirty(); setNote(); }
+else {
+  const c = lerCache();
+  if(c){ load(c.data); state = read(); route(); markDirty(); setNote(); carimbo(); }   // pinta na hora
+  else route();
+  const idade = c ? (Date.now()-c.ts)/60000 : Infinity;
+  if(idade >= ATUALIZAR_A_CADA_MIN) refresh(!!c); // só revalida se o cache já venceu
+  setInterval(()=>refresh(true), ATUALIZAR_A_CADA_MIN*60*1000);
+  // botão "Atualizar agora" força a leitura, ignorando o cache
+  const b = $('reload'); if(b) b.onclick = () => refresh(false);
+}
+</script>
+</body>
+</html>
