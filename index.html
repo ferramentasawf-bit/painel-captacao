@@ -72,6 +72,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      <div>
       <span class="inline-flex items-center gap-2 bg-indigo-600 text-white text-[12px] font-semibold px-3 py-1.5 rounded-md"><svg class="ico ico-sm" style="width:14px;height:14px"><use href="#i-video"/></svg>Webinar <span id="camp"></span></span>
       <button id="reload" title="Ignora o cache e lê a planilha de novo" class="inline-flex items-center gap-1.5 border bg-white hover:bg-accent text-zinc-600 text-[11px] font-semibold px-2.5 py-1.5 rounded-md ml-1.5 align-middle"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Atualizar agora</button>
+      <span id="ver" class="text-[10px] text-zinc-400 ml-2 align-middle"></span>
       <h1 id="vTitle" class="text-[32px] font-bold tracking-tight text-zinc-900 mt-2 leading-tight"></h1>
       <p id="vSub" class="text-[13px] text-muted-foreground mt-1"></p>
      </div>
@@ -517,6 +518,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
 
 <script>
 // ===== CONFIGURAÇÃO =====
+const VERSAO = 'v12 · trava de data futura no painel';
 const WEBHOOK_URL = 'https://n8n.pauloaguiarx.com.br/webhook/painel-captacao';
 const ATUALIZAR_A_CADA_MIN = 15;   // minutos entre revalidações (cache local evita leituras repetidas)
 // Imagem de cada canal (utm_source). Pode ser o site da ferramenta (vira o ícone dela)
@@ -1590,7 +1592,7 @@ function bindCanal(id){
 function setNote(){
   const d = new Date(DATA.atualizado_em || Date.now());
   $('note').className = 'text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed';
-  let txt = `Dados de ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}. ${DATA.removidos ? DATA.removidos+' linhas ignoradas (cadastros de teste ou data de inscrição inválida). ' : ''}Números a partir das colunas da BASE LEADS.`;
+  let txt = `${VERSAO}. Dados de ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}. ${DATA.removidos ? DATA.removidos+' linhas ignoradas (cadastros de teste ou data de inscrição inválida). ' : ''}Números a partir das colunas da BASE LEADS.`;
   const dg = DATA.vendas && DATA.vendas.diag;
   if(dg) txt += ' Coluna de data usada em cada aba — ' + Object.entries(dg)
     .map(([t,x])=>`${t}: ${x.colunas && x.colunas.data ? x.colunas.data : 'NENHUMA ENCONTRADA'}`).join(' · ') + '.';
@@ -1625,6 +1627,7 @@ async function refresh(silencioso){
     }
   } finally { buscando = false; }
 }
+{ const e=$('ver'); if(e) e.textContent = VERSAO; }
 if(EMBED){ load(EMBED); state = read(); route(); markDirty(); setNote(); }
 else {
   const c = lerCache();
