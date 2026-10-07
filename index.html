@@ -505,6 +505,13 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
        <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPlat"></tbody></table></div>
       </section>
      </div>
+
+     <section id="vnDiagBox" class="rounded-xl border bg-white px-7 py-7 mt-6" hidden>
+      <span class="inline-flex items-center gap-1.5 rounded-full border text-zinc-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Leitura das planilhas</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">De onde cada número veio</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Qual coluna de cada aba foi usada para cada campo. Se algo essencial aparecer em vermelho, é só acrescentar o nome exato da coluna na lista <code>COL</code> do nó "Agregar números".</p>
+      <div id="vnDiag" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-5"></div>
+     </section>
     </div>
 
     <p id="note" class="text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed"></p>
@@ -1180,7 +1187,7 @@ function renderVen(){
     ['vnCash','vnLiq','vnGer','vnConv'].forEach(i=>$(i).textContent='–');
     ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
     $('vnBest').textContent = '–'; $('vnChart').innerHTML = '';
-    $('vnPagBar').innerHTML = '';
+    $('vnPagBar').innerHTML = ''; renderDiag(V && V.diag);
     ['vnPrio','vnOrig','vnPag','vnCons','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML=`<tr><td class="py-4 text-[12px] text-muted-foreground">${i==='vnPrio'?'Aguardando a aba Aplicações.':'Aguardando as abas de transação.'}</td></tr>`);
     return;
   }
@@ -1347,6 +1354,34 @@ function renderVen(){
       <td class="${td} ${ct-b>0?'text-amber-500 font-semibold':'text-zinc-400'}">${ct-b>0?brl(ct-b):'–'}</td></tr>`; }
   t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold text-red-500">− ${brl(taxas)}</td><td class="${td} font-bold">${brl(liq)}</td><td class="${td} font-bold text-amber-500">${brl(receber)}</td></tr>`;
   $('vnPlat').innerHTML = t;
+
+  // ---- diagnóstico de colunas
+  renderDiag(V.diag);
+}
+const DIAG_ESSENCIAIS = { 'Aplicações': ['email','prio'], _default: ['email','data','bruto'] };
+const DIAG_ROTULO = { email:'E-mail', telefone:'Telefone', data:'Data', status:'Status', bruto:'Valor bruto',
+  liquido:'Valor líquido', taxa:'Taxa', pagto:'Forma de pagamento', consultor:'Consultor',
+  utm_source:'utm_source', prio:'Prioridade', completa:'Completa' };
+function renderDiag(diag){
+  const box = $('vnDiagBox'); if(!diag || !Object.keys(diag).length){ box.hidden = true; return; }
+  box.hidden = false;
+  $('vnDiag').innerHTML = Object.entries(diag).map(([tab,d])=>{
+    const ess = DIAG_ESSENCIAIS[tab] || DIAG_ESSENCIAIS._default;
+    const faltando = ess.filter(k=>!d.colunas[k]);
+    const rec = Object.entries(d.recusados||{});
+    return `<div class="rounded-lg border ${faltando.length?'border-red-200 bg-red-50/40':'border-zinc-200'} p-4">
+      <div class="flex items-center justify-between gap-2">
+        <b class="text-[12px] text-zinc-900">${tab}</b>
+        <span class="text-[10px] ${faltando.length?'text-red-600 font-bold':'text-zinc-500'}">${faltando.length?'falta coluna':'ok'}</span></div>
+      <div class="text-[10px] text-zinc-500 mt-0.5">${fmt(d.linhas)} linhas${d.ignorados?` · ${fmt(d.ignorados)} ignoradas`:''}</div>
+      <div class="mt-3 flex flex-col gap-1">${Object.entries(d.colunas).map(([k,c])=>{
+        const crit = ess.includes(k);
+        if(!c && !crit) return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="text-zinc-400">${DIAG_ROTULO[k]||k}</span><span class="text-zinc-300">—</span></div>`;
+        return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="${crit?'font-semibold text-zinc-700':'text-zinc-500'}">${DIAG_ROTULO[k]||k}</span><span class="${c?'text-zinc-900 font-medium text-right':'text-red-600 font-bold'}">${c||'não encontrada'}</span></div>`;
+      }).join('')}</div>
+      ${rec.length?`<div class="mt-3 text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1.5">Valores recusados por parecerem data ou estourarem o teto: ${rec.map(([k,n])=>`${DIAG_ROTULO[k]||k} (${n})`).join(', ')}</div>`:''}
+    </div>`;
+  }).join('');
 }
 function bindCanal(id){
   $(id).querySelectorAll('[data-c]').forEach(tr=>{
