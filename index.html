@@ -1218,8 +1218,9 @@ function renderVen(){
   $('vnLiqSub').textContent = `${brl(taxas)} em taxas (${pct(taxas,cash)} do bruto)`;
   $('vnGer').textContent = brl(ger);
   $('vnGerSub').textContent = receber > 0 ? `${brl(receber)} ainda a receber (boleto e saldo TMB)` : 'tudo já em caixa';
-  $('vnConv').textContent = pct(fecharam,L,2);
-  $('vnConvSub').textContent = `${fmt(fecharam)} leads fecharam · ${fmt(nv)} transaç${nv===1?'ão':'ões'} em ${fmt(L)} leads`;
+  const compradores = V.compradores ?? fecharam;
+  $('vnConv').textContent = pct(compradores,L,2);
+  $('vnConvSub').textContent = `${fmt(compradores)} compradores únicos em ${fmt(L)} leads · ${fmt(nv)} transaç${nv===1?'ão':'ões'}`;
 
   const stat = (lbl,val,sub,cls='text-zinc-900') => `<div class="rounded-lg border bg-white p-4">
     <div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${lbl}</div>
@@ -1238,9 +1239,9 @@ function renderVen(){
         <div class="text-[15px] font-bold text-zinc-500 tabnum">${fmt(apInc)}<span class="text-[10px] font-semibold text-zinc-400 ml-1">${apTot?pct(apInc,apTot,0):'–'}</span></div></div>
     </div></div>`;
   box.innerHTML =
-      stat('Vendas confirmadas', fmt(nv), `${fmt(fecharam)} leads fecharam${(V.sem_match||0)?` · ${fmt(V.sem_match)} sem match na base`:''}`)
+      stat('Vendas confirmadas', fmt(nv), `${fmt(compradores)} compradores únicos${nv!==compradores?` · ${fmt(nv-compradores)} compraram mais de uma vez`:''}${(V.sem_match||0)?` · ${fmt(V.sem_match)} sem match na base`:''}`)
     + cardAplic
-    + stat('Aplicação → venda', apComp ? pct(fecharam,apComp) : '–', apComp ? `${fmt(fecharam)} de ${fmt(apComp)} fichas completas` : 'aguardando a aba Aplicações', 'text-emerald-600')
+    + stat('Aplicação → venda', apComp ? pct(compradores,apComp) : '–', apComp ? `${fmt(compradores)} compradores de ${fmt(apComp)} fichas completas` : 'aguardando a aba Aplicações', 'text-emerald-600')
     + stat('Ticket médio bruto', brl(nv?cash/nv:0), `${brl(nv?ger/nv:0)} de ticket contratado`, 'text-amber-500');
 
   // ---- gráfico: barras de vendas + linha de faturamento
@@ -1409,10 +1410,16 @@ function renderVen(){
   // ---- diagnóstico de colunas
   renderDiag(V.diag);
 }
-const DIAG_ESSENCIAIS = { 'Aplicações': ['email','prio'], _default: ['email','data','bruto'] };
-const DIAG_ROTULO = { email:'E-mail', telefone:'Telefone', data:'Data', status:'Status', bruto:'Valor bruto',
-  liquido:'Valor líquido', taxa:'Taxa', pagto:'Forma de pagamento', consultor:'Consultor',
-  utm_source:'utm_source', prio:'Prioridade', completa:'Completa' };
+const DIAG_ESSENCIAIS = {
+  'Aplicações':   ['email','prio'],
+  'Base Assiny':  ['email','status','valor','taxa'],
+  'Base Hotmart': ['email','status','valor','recebido'],
+  'Base TMB':     ['email','parcela','pedido','entrada','ticket'],
+  _default: ['email'] };
+const DIAG_ROTULO = { email:'E-mail', telefone:'Telefone', data:'Data', status:'Status',
+  valor:'Valor R$', recebido:'Valor Recebido R$', taxa:'Taxa (÷100)', parcela:'Parcela',
+  pedido:'Pedido', entrada:'Entrada', ticket:'Ticket (nominal)', pagto:'Forma de pagamento',
+  vendedor:'Vendedor', utm:'utm_source', prio:'Prioridade', completa:'Completa' };
 function renderDiag(diag){
   const box = $('vnDiagBox'); if(!diag || !Object.keys(diag).length){ box.hidden = true; return; }
   box.hidden = false;
@@ -1420,14 +1427,24 @@ function renderDiag(diag){
     const ess = DIAG_ESSENCIAIS[tab] || DIAG_ESSENCIAIS._default;
     const faltando = ess.filter(k=>!d.colunas[k]);
     const rec = Object.entries(d.recusados||{});
+    const vistos = Object.entries(d.status_vistos||{}).sort((a,b)=>b[1]-a[1]);
+    const filtros = [];
+    if(d.fora_status)  filtros.push(`${fmt(d.fora_status)} fora do status`);
+    if(d.fora_parcela) filtros.push(`${fmt(d.fora_parcela)} parcela ≠ 0`);
+    if(d.duplicados)   filtros.push(`${fmt(d.duplicados)} pedido duplicado`);
+    if(d.fora_data)    filtros.push(`${fmt(d.fora_data)} antes da campanha`);
+    if(d.sem_comprador)filtros.push(`${fmt(d.sem_comprador)} sem comprador (linha de total)`);
     return `<div class="rounded-lg border ${faltando.length?'border-red-200 bg-red-50/40':'border-zinc-200'} p-4">
       <div class="flex items-center justify-between gap-2">
         <b class="text-[12px] text-zinc-900">${tab}</b>
         <span class="text-[10px] ${faltando.length?'text-red-600 font-bold':'text-zinc-500'}">${faltando.length?'falta coluna':'ok'}</span></div>
-      <div class="text-[10px] text-zinc-500 mt-0.5">${fmt(d.linhas)} linhas${d.ignorados?` · ${fmt(d.ignorados)} ignoradas`:''}${d.sem_comprador?` (${fmt(d.sem_comprador)} sem comprador)`:''}</div>
-      ${d.conferencia?`<div class="mt-2 rounded px-2 py-1.5 text-[10px] border ${d.conferencia.bate?'bg-emerald-50 border-emerald-100 text-emerald-800':'bg-red-50 border-red-100 text-red-700'}">
-        <b>${d.conferencia.bate?'Confere com o total da aba':'NÃO bate com o total da aba'}</b><br>
-        planilha ${brl(d.conferencia.bruto,2)} · somado ${brl(d.conferencia.calculado||0,2)}${d.conferencia.bate?'':` · diferença ${brl(d.conferencia.diferenca||0,2)}`}</div>`:''}
+      <div class="text-[10px] text-zinc-500 mt-0.5">${fmt(d.linhas)} linhas${d.validas!=null?` · <b class="text-zinc-700">${fmt(d.validas)} válidas</b>`:''}</div>
+      ${filtros.length?`<div class="mt-2 flex flex-wrap gap-1">${filtros.map(f=>`<span class="text-[9.5px] bg-zinc-100 text-zinc-600 rounded px-1.5 py-0.5">${f}</span>`).join('')}</div>`:''}
+      ${d.taxa_media_pct!=null?`<div class="mt-2 text-[10px] ${(d.taxa_media_pct>0.2&&d.taxa_media_pct<20)?'text-zinc-600':'text-amber-700 font-semibold'}">Taxa média: ${String(d.taxa_media_pct).replace('.',',')}% do bruto${(d.taxa_media_pct>0.2&&d.taxa_media_pct<20)?'':' — confira contra o painel da plataforma'}</div>`:''}
+      ${d.total_planilha?`<div class="mt-2 rounded px-2 py-1.5 text-[10px] border ${d.bate?'bg-emerald-50 border-emerald-100 text-emerald-800':'bg-red-50 border-red-100 text-red-700'}">
+        <b>${d.bate?'Confere com o total da aba':'NÃO bate com o total da aba'}</b><br>
+        planilha ${brl(d.total_planilha,2)} · somado ${brl(d.somado||0,2)}${d.bate?'':` · diferença ${brl(d.diferenca||0,2)}`}</div>`:''}
+      ${vistos.length?`<details class="mt-2"><summary class="text-[10px] font-semibold text-indigo-600 cursor-pointer">status encontrados na aba</summary><div class="mt-1 flex flex-wrap gap-1">${vistos.map(([k,n])=>`<span class="text-[9.5px] bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5">${k}: ${fmt(n)}</span>`).join('')}</div></details>`:''}
       <div class="mt-3 flex flex-col gap-1">${Object.entries(d.colunas).map(([k,c])=>{
         const crit = ess.includes(k);
         if(!c && !crit) return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="text-zinc-400">${DIAG_ROTULO[k]||k}</span><span class="text-zinc-300">—</span></div>`;
