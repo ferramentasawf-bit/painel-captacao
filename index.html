@@ -1217,6 +1217,12 @@ function renderPace(V, K, vs, apRows, AK){
   const mNom   = vcM * F.ticket_cartao + vbM * (F.ticket_nominal || F.ticket_boleto);
   const mAplic = Math.round(showupR * F.aplic_pct);
   const METAS  = { vendas:mVendas, cash:mCash, aplic:mAplic };
+  // totais de tudo que veio das abas, para conferir contra o que cai na janela
+  const TOTAIS = {
+    vendas: vs.length,
+    cash:   vs.reduce((a,r)=>a+r[K.bruto],0),
+    aplic:  apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0),
+  };
 
   // janela
   const diasV = [...new Set(vs.map(r=>r[K.dia]).filter(Boolean))].sort();
@@ -1287,7 +1293,10 @@ function renderPace(V, K, vs, apRows, AK){
     const metaCum = []; metaDia.reduce((a,x,i)=>(metaCum[i]=a+x),0);
     const v  = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
     const kv = money ? (x=> x>=1000 ? 'R$ '+(x/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(x)) : (x=>fmt(Math.round(x)));
-    const ultimo = Math.min(totalDias-1, Math.max(0, dd(ini,corte)));
+    // desenha até hoje, ou até o último dia que tem dado — nada de linha
+    // datada à frente sumir do gráfico e do total.
+    let ultimoDado = -1; dL.forEach((x,i)=>{ if(x) ultimoDado = i; });
+    const ultimo = Math.min(totalDias-1, Math.max(0, dd(ini,corte), ultimoDado));
     const n = totalDias, W = 1000, H = 300, topo = 66, base = 236;
     const grupo = W/n, bw = Math.min(46, Math.max(12, grupo*0.3)), gi = Math.min(12, bw*0.28);
     const max = Math.max(...cum, ...metaCum) || 1, h = val => (val/max)*(base-topo);
@@ -1314,13 +1323,17 @@ function renderPace(V, K, vs, apRows, AK){
       g += `<text x="${cx}" y="${base+33}" text-anchor="middle" font-size="9" fill="#a1a1aa">${futuro?`previsto +${kv(metaDia[i])}`:`+${kv(dL[i])} de +${kv(metaDia[i])}`}</text>`;
     });
     g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
-    const feito = cum[ultimo] || 0, esp = metaCum[ultimo], atras = feito < esp;
+    const feito = dL.reduce((a,b)=>a+b,0);              // mesmo número do card
+    const hojeIdx = Math.min(totalDias-1, Math.max(0, dd(ini,corte)));
+    const esp = metaCum[hojeIdx], atras = feito < esp;
+    const foraDaJanela = TOTAIS[k] - feito;
     return `<div>
       <div class="flex items-end justify-between flex-wrap gap-2 border-b pb-2 mb-3">
         <div class="text-[13px] font-bold text-zinc-900">${rot}</div>
         <div class="text-[11px] tabnum"><span class="text-zinc-500">acumulado</span> <b class="text-zinc-900">${v(feito)}</b> <span class="text-zinc-400">·</span> <span class="text-zinc-500">previsto</span> <b class="text-zinc-900">${v(esp)}</b> <span class="text-zinc-400">·</span> <b class="${atras?'text-red-600':'text-emerald-600'}">${atras?`${v(esp-feito)} abaixo`:`${v(feito-esp)} acima`}</b></div>
       </div>
-      ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-2 mb-3">A aba Aplicações não tem coluna de data, então o total de ${fmt(totAplicComp)} aparece todo no primeiro dia. Com a data, a curva se distribui.</p>`:''}
+      ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3"><b>A aba Aplicações não tem coluna de data.</b> Por isso as ${fmt(totAplicComp)} aplicações caem todas no primeiro dia e os dias seguintes repetem o mesmo acumulado. Adicione a coluna de data na aba que a curva se distribui sozinha.</p>`:''}
+      ${Math.abs(foraDaJanela) > (k==='cash' ? 1 : 0.5) ? `<p class="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3"><b>${v(Math.abs(foraDaJanela))} ${foraDaJanela>0?'de fora da janela':'a mais que o total'}.</b> ${foraDaJanela>0?`Há registros com data fora de ${ddmm(ini)}–${ddmm(fim)}. Ajuste <code>periodo_vendas</code> ou confira a coluna de data.`:'Confira a janela configurada.'}</p>`:''}
       <div class="overflow-x-auto">${g}</div></div>`;
   }).join('');
 }
@@ -1563,7 +1576,11 @@ function bindCanal(id){
 function setNote(){
   const d = new Date(DATA.atualizado_em || Date.now());
   $('note').className = 'text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed';
-  $('note').textContent = `Dados de ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}. ${DATA.removidos ? DATA.removidos+' linhas ignoradas (cadastros de teste ou data de inscrição inválida). ' : ''}Números a partir das colunas da BASE LEADS.`;
+  let txt = `Dados de ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}. ${DATA.removidos ? DATA.removidos+' linhas ignoradas (cadastros de teste ou data de inscrição inválida). ' : ''}Números a partir das colunas da BASE LEADS.`;
+  const dg = DATA.vendas && DATA.vendas.diag;
+  if(dg) txt += ' Coluna de data usada em cada aba — ' + Object.entries(dg)
+    .map(([t,x])=>`${t}: ${x.colunas && x.colunas.data ? x.colunas.data : 'NENHUMA ENCONTRADA'}`).join(' · ') + '.';
+  $('note').textContent = txt;
 }
 // Cache local: mostra a última leitura na hora e revalida por trás, para não
 // bater no n8n (e na cota do Google Sheets) a cada aba aberta ou F5.
