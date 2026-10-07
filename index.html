@@ -466,6 +466,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
         <div class="mt-1"><span id="vnBest" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div></div>
       </div>
       <div id="vnChart" class="overflow-x-auto mt-6"></div>
+      <div id="vnChartAviso"></div>
      </section>
 
      <div class="grid lg:grid-cols-2 gap-6 mt-6">
@@ -655,6 +656,18 @@ const META = {
   // Janela de vendas, usada no pacing da aba Vendas.
   // inicio vazio = primeiro dia com venda registrada.
   periodo_vendas: { inicio: '', fim: '2026-10-12' },
+  // Como a meta se distribui ao longo da janela. Lançamento não é linear:
+  // estoura no dia 1, cai no miolo e repica no fechamento do carrinho.
+  //   d1 = fatia do total no 1º dia · dn = fatia no último dia (repique)
+  //   o miolo recebe o resto, decaindo por 'decaimento' (0,72 = cada dia 28% menor)
+  // Referência do histórico: o 1º dia valeu de 19% a 67% do total das campanhas
+  // W04–W08, com mediana de 54%. Os valores do miolo e do repique são premissa.
+  curva_meta: {
+    vendas: { d1: 0.55, dn: 0.15 },
+    cash:   { d1: 0.55, dn: 0.15 },
+    aplic:  { d1: 0.65, dn: 0.08 },   // aplicação concentra ainda mais no dia da live
+    decaimento: 0.72,
+  },
 };
 // =========================
 const EMBED = null;
@@ -666,6 +679,7 @@ const pct = (a,b,d=1) => b ? pctN(a,b).toLocaleString('pt-BR',{minimumFractionDi
 const SEGS = ['Aluno 7d','Aluno 14d','Aluno 30d','Aluno antigo','Não aluno'];
 const FXS = ['A','B','C','D','E','F','Sem score'];
 const sum = (rs,k) => rs.reduce((s,r)=>s+r[C[k]],0);
+const txtU = v => { const t = String(v ?? '').trim(); return t && t !== '—' ? t : '—'; };
 const ddmm = d => `${d.slice(8)}/${d.slice(5,7)}`;
 const dm = d => `${+d.slice(8)}/${+d.slice(5,7)}`;
 const opts = (sel, vals, all) => { const cur = sel.value; sel.innerHTML = `<option value="">${all}</option>` + vals.map(v=>`<option>${v}</option>`).join(''); sel.value = cur; };
@@ -1172,6 +1186,17 @@ function renderMeta(){
 //   aplic: { cols:['cluster','canal','prio','completa','n'], rows:[...] }  // completa = 1|0
 //   leads_fecharam, sem_match, nominal_tmb
 // ======== PACING CONTRA A META ========
+// Distribui a meta ao longo da janela: boom no 1º dia, queda no miolo e
+// repique no fechamento. Devolve as fatias de cada dia, somando 1.
+function curvaMeta(n, d1, dn, r){
+  if(n <= 1) return [1];
+  if(n === 2) return [d1/(d1+dn), dn/(d1+dn)];
+  if(d1 + dn > 1){ const t = d1 + dn; d1 /= t; dn /= t; }
+  const meio = Math.max(0, 1 - d1 - dn), m = n - 2;
+  const pesos = Array.from({length:m}, (_,i)=>Math.pow(r, i));
+  const soma = pesos.reduce((a,b)=>a+b, 0) || 1;
+  return [d1, ...pesos.map(p => meio*p/soma), dn];
+}
 const PACE_METRICAS = [
   { k:'vendas', rot:'Vendas',       money:false },
   { k:'cash',   rot:'Faturamento',  money:true  },
@@ -1179,6 +1204,7 @@ const PACE_METRICAS = [
 ];
 function renderPace(V, K, vs, apRows, AK){
   const F = META.funil, PV = META.periodo_vendas || {};
+  const CV = META.curva_meta || { vendas:{d1:.55,dn:.15}, cash:{d1:.55,dn:.15}, aplic:{d1:.65,dn:.08}, decaimento:.72 };
   const metaLeadsN = META.matriz.leads.Total.at(-1);
   const leadsR  = F.leads_real || sum(rows,'l') || metaLeadsN;
   const showupR = F.showup_real || Math.floor(metaLeadsN * F.showup_pct);
@@ -1217,16 +1243,19 @@ function renderPace(V, K, vs, apRows, AK){
   };
 
   $('vnPaceDias').textContent = hojeISO > fim ? 'encerrado' : fmt(restantes);
-  $('vnPaceSub').innerHTML = `Janela de ${ddmm(ini)} a ${ddmm(fim)} · <b class="text-zinc-900">dia ${fmt(decorridos)} de ${fmt(totalDias)}</b>. Metas vindas do funil da aba Meta: ${pct(F.vendas_lead_pct,1,1)} sobre ${fmt(leadsR)} leads.`;
+  $('vnPaceSub').innerHTML = `Janela de ${ddmm(ini)} a ${ddmm(fim)} · <b class="text-zinc-900">dia ${fmt(decorridos)} de ${fmt(totalDias)}</b>. Metas do funil da aba Meta (${pct(F.vendas_lead_pct,1,1)} sobre ${fmt(leadsR)} leads), distribuídas numa régua de lançamento: <b class="text-zinc-900">${pct(CV.cash.d1,1,0)} no 1º dia</b>, queda no miolo e <b class="text-zinc-900">${pct(CV.cash.dn,1,0)} no fechamento</b>.`;
 
   // ---- cards
   $('vnPaceCards').innerHTML = PACE_METRICAS.map(({k,rot,money})=>{
     const meta = METAS[k], feito = serie[k].reduce((a,b)=>a+b,0);
     const v = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
-    const esperado = meta * decorridos / totalDias;
+    const fatias = curvaMeta(totalDias, CV[k].d1, CV[k].dn, CV.decaimento);
+    const esperado = meta * fatias.slice(0, decorridos).reduce((a,b)=>a+b, 0);
     const falta = Math.max(0, meta - feito);
     const precisa = restantes ? falta / restantes : falta;
-    const projecao = feito / decorridos * totalDias;
+    // projeção pela curva: se hoje deveríamos ter X% do total, o fechamento é feito ÷ X%
+    const fatiaAcum = fatias.slice(0, decorridos).reduce((a,b)=>a+b, 0) || 1;
+    const projecao = feito / fatiaAcum;
     const bateu = feito >= meta, noRitmo = feito >= esperado;
     const c = bateu ? ['border-emerald-200 bg-emerald-50/60','text-emerald-700','meta batida']
             : noRitmo ? ['border-emerald-100 bg-emerald-50/40','text-emerald-700','no ritmo']
@@ -1243,7 +1272,7 @@ function renderPace(V, K, vs, apRows, AK){
         <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">${restantes?'Precisa por dia':'Falta'}</div>
           <div class="text-[14px] font-bold ${falta?c[1]:'text-emerald-600'} tabnum">${falta?v(precisa):'–'}</div></div></div>
       <div class="text-[10px] text-zinc-500 mt-2.5">${bateu ? `Passou a meta em <b class="text-emerald-600">${v(feito-meta)}</b>.`
-        : restantes ? `Nesse ritmo fecha em <b class="text-zinc-800">${v(projecao)}</b>, ${pct(projecao,meta,0)} da meta.`
+        : restantes ? `Mantido o padrão de lançamento, fecha em <b class="text-zinc-800">${v(projecao)}</b>, ${pct(projecao,meta,0)} da meta.`
         : `Fechou ${v(falta)} abaixo da meta.`}</div></div>`;
   }).join('');
 
@@ -1251,7 +1280,9 @@ function renderPace(V, K, vs, apRows, AK){
   $('vnPaceCharts').innerHTML = PACE_METRICAS.map(({k,rot,money})=>{
     const meta = METAS[k], dL = serie[k];
     const cum = []; dL.reduce((a,x,i)=>(cum[i]=a+x),0);
-    const metaCum = dias.map((_,i)=>meta*(i+1)/totalDias);
+    const fatias = curvaMeta(totalDias, CV[k].d1, CV[k].dn, CV.decaimento);
+    const metaDia = fatias.map(f=>meta*f);
+    const metaCum = []; metaDia.reduce((a,x,i)=>(metaCum[i]=a+x),0);
     const v  = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
     const kv = money ? (x=> x>=1000 ? 'R$ '+(x/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(x)) : (x=>fmt(Math.round(x)));
     const n = dias.length, W = 1000, H = 262, base = 230, top = 62, gap = 3;
@@ -1280,7 +1311,7 @@ function renderPace(V, K, vs, apRows, AK){
     return `<div>
       <div class="flex items-end justify-between flex-wrap gap-2 border-b pb-2 mb-3">
         <div class="text-[13px] font-bold text-zinc-900">${rot}</div>
-        <div class="text-[11px] ${atras?'text-red-600':'text-emerald-600'} font-semibold tabnum">${v(feito)} hoje · meta do dia ${v(esp)} · ${atras?`${v(esp-feito)} atrás`:`${v(feito-esp)} à frente`}</div>
+        <div class="text-[11px] tabnum"><span class="text-zinc-500">acumulado</span> <b class="text-zinc-900">${v(feito)}</b> <span class="text-zinc-400">·</span> <span class="text-zinc-500">previsto</span> <b class="text-zinc-900">${v(esp)}</b> <span class="text-zinc-400">·</span> <b class="${atras?'text-red-600':'text-emerald-600'}">${atras?`${v(esp-feito)} abaixo`:`${v(feito-esp)} acima`}</b></div>
       </div>
       ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-2 mb-3">A aba Aplicações não tem coluna de data, então o total de ${fmt(totAplicComp)} aparece todo no primeiro dia. Com a data, a curva se distribui.</p>`:''}
       <div class="overflow-x-auto">${g}</div></div>`;
@@ -1294,7 +1325,7 @@ function renderVen(){
     box.innerHTML = aviso;
     ['vnCash','vnLiq','vnGer','vnConv'].forEach(i=>$(i).textContent='–');
     ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
-    $('vnBest').textContent = '–'; $('vnChart').innerHTML = '';
+    $('vnBest').textContent = '–'; $('vnChart').innerHTML = ''; $('vnChartAviso').innerHTML = '';
     $('vnPagBar').innerHTML = '';
     $('vnPaceCards').innerHTML = '<p class="col-span-full text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
     $('vnPaceCharts').innerHTML = '';
@@ -1366,40 +1397,54 @@ function renderVen(){
   $('vnChartSub').textContent = `${fmt(nv)} vendas e ${brl(cash)} em caixa entre ${ddmm(dias[0])} e ${ddmm(dias.at(-1))}.`;
   const PLAT = [['assiny','Assiny','#6366f1'],['hotmart','Hotmart','#8b5cf6'],['tmb','TMB','#f59e0b']];
   const presentes = PLAT.filter(([k])=>vs.some(r=>r[K.plat]===k));
-  // Por dia, duas colunas lado a lado: quantidade de vendas e faturamento,
-  // ambas empilhadas pelas mesmas cores de plataforma.
-  const n = dias.length, W = 1000, H = 310, top = 58, base = 244;
-  const grupo = W / n, gi = Math.min(26, grupo*0.16), bw = Math.max(10, (grupo - gi - 18) / 2);
+  // Por dia, um par de colunas: vendas (sólida) e faturamento (clara),
+  // as duas empilhadas pelas mesmas cores de plataforma.
+  const n = dias.length, W = 1000, H = 318, topo = 74, base = 252;
+  const grupo = W / n;
+  const bw = Math.min(54, Math.max(14, grupo * 0.3));
+  const gi = Math.min(16, bw * 0.3);
   const maxN = Math.max(...dN,1), maxR = Math.max(...dR,1);
-  const hN = q => (q/maxN)*(base-top), hR = v => (v/maxR)*(base-top);
+  const hN = q => (q/maxN)*(base-topo), hR = v => (v/maxR)*(base-topo);
   const kbrl = v => v >= 1000 ? 'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(v);
-  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:700px;font-family:Inter,sans-serif" role="img" aria-label="Vendas e faturamento por plataforma, por dia">`;
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px;font-family:Inter,sans-serif" role="img" aria-label="Vendas e faturamento por plataforma, por dia">`;
   let lx = 0;
-  for(const [,nome,cor] of presentes){ g += `<rect x="${lx}" y="10" width="9" height="9" rx="2" fill="${cor}"/><text x="${lx+13}" y="18" font-size="9.5" font-weight="600" fill="#52525b">${nome}</text>`; lx += 26 + nome.length*5.9; }
-  g += `<text x="${lx+6}" y="18" font-size="9.5" fill="#a1a1aa">coluna da esquerda = vendas · da direita = faturamento</text>`;
+  for(const [,nome,cor] of presentes){ g += `<rect x="${lx}" y="8" width="9" height="9" rx="2" fill="${cor}"/><text x="${lx+13}" y="16" font-size="9.5" font-weight="600" fill="#52525b">${nome}</text>`; lx += 26 + nome.length*5.9; }
+  g += `<rect x="${lx+6}" y="8" width="9" height="9" rx="2" fill="#71717a"/><text x="${lx+19}" y="16" font-size="9.5" fill="#71717a">barra sólida = vendas</text>`;
+  g += `<rect x="${lx+150}" y="8" width="9" height="9" rx="2" fill="#71717a" opacity=".45"/><text x="${lx+163}" y="16" font-size="9.5" fill="#71717a">barra clara = faturamento</text>`;
   dias.forEach((d,i)=>{
-    const g0 = i*grupo + 9, xA = g0, xB = g0 + bw + gi, cxG = g0 + bw + gi/2;
+    const cxG = i*grupo + grupo/2;
+    const xA = cxG - gi/2 - bw, xB = cxG + gi/2;
     const rsD = vs.filter(r=>r[K.dia]===d);
+    if(i%2) g += `<rect x="${i*grupo}" y="30" width="${grupo}" height="${base-30}" fill="#fafafa"/>`;
     let accN = 0, accR = 0;
     for(const [k,nome,cor] of presentes){
       const rsP = rsD.filter(r=>r[K.plat]===k), q = rsP.length; if(!q) continue;
       const val = rsP.reduce((a,r)=>a+r[K.bruto],0);
-      const yA = base - hN(accN) - hN(q), hA = hN(q);
+      const hA = hN(q), yA = base - hN(accN) - hA;
       g += `<rect x="${xA}" y="${yA}" width="${bw}" height="${hA}" fill="${cor}"><title>${ddmm(d)} · ${nome}: ${fmt(q)} vendas</title></rect>`;
-      if(hA > 15) g += `<text x="${xA+bw/2}" y="${yA+hA/2+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${fmt(q)}</text>`;
-      const yB = base - hR(accR) - hR(val), hB = hR(val);
-      g += `<rect x="${xB}" y="${yB}" width="${bw}" height="${hB}" fill="${cor}" opacity=".58"><title>${ddmm(d)} · ${nome}: ${brl(val)}</title></rect>`;
-      if(hB > 15) g += `<text x="${xB+bw/2}" y="${yB+hB/2+4}" text-anchor="middle" font-size="9" font-weight="700" fill="#27272a">${kbrl(val)}</text>`;
+      if(hA > 16) g += `<text x="${xA+bw/2}" y="${yA+hA/2+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${fmt(q)}</text>`;
+      const hB = hR(val), yB = base - hR(accR) - hB;
+      g += `<rect x="${xB}" y="${yB}" width="${bw}" height="${hB}" fill="${cor}" opacity=".45"><title>${ddmm(d)} · ${nome}: ${brl(val)}</title></rect>`;
+      if(hB > 16) g += `<text x="${xB+bw/2}" y="${yB+hB/2+4}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#3f3f46">${kbrl(val)}</text>`;
       accN += q; accR += val;
     }
-    g += `<text x="${xA+bw/2}" y="${base-hN(dN[i])-8}" text-anchor="middle" font-size="12" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
-    g += `<text x="${xA+bw/2}" y="${base-hN(dN[i])-21}" text-anchor="middle" font-size="8" font-weight="600" fill="#a1a1aa" letter-spacing=".05em">VENDAS</text>`;
-    g += `<text x="${xB+bw/2}" y="${base-hR(dR[i])-8}" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">${kbrl(dR[i])}</text>`;
-    g += `<text x="${xB+bw/2}" y="${base-hR(dR[i])-21}" text-anchor="middle" font-size="8" font-weight="600" fill="#a1a1aa" letter-spacing=".05em">FATURAMENTO</text>`;
-    g += `<text x="${cxG}" y="${H-10}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+    const yTopo = base - Math.max(hN(dN[i]), hR(dR[i])) - 10;
+    g += `<text x="${xA+bw/2}" y="${yTopo}" text-anchor="middle" font-size="13" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
+    g += `<text x="${xB+bw/2}" y="${yTopo}" text-anchor="middle" font-size="13" font-weight="700" fill="#059669">${kbrl(dR[i])}</text>`;
+    g += `<text x="${xA+bw/2}" y="${yTopo-13}" text-anchor="middle" font-size="8" font-weight="700" fill="#a1a1aa" letter-spacing=".06em">VENDAS</text>`;
+    g += `<text x="${xB+bw/2}" y="${yTopo-13}" text-anchor="middle" font-size="8" font-weight="700" fill="#a1a1aa" letter-spacing=".06em">FATURAM.</text>`;
+    g += `<text x="${cxG}" y="${base+20}" text-anchor="middle" font-size="11" font-weight="700" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+    g += `<text x="${cxG}" y="${base+34}" text-anchor="middle" font-size="9" fill="#a1a1aa">${fmt(dN[i])} vendas · ${kbrl(dR[i])}</text>`;
   });
   g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
   $('vnChart').innerHTML = g;
+  // aviso de datas futuras encontradas nas abas
+  const fut = Object.entries((V.diag)||{}).filter(([,d])=>d.futuras);
+  $('vnChartAviso').innerHTML = fut.length
+    ? `<div class="mt-4 text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+        ${fut.map(([t,d])=>`<b>${fmt(d.futuras)} transaç${d.futuras>1?'ões':'ão'}</b> da aba <b>${t}</b> ${d.futuras>1?'vinham':'vinha'} com data futura (${ddmm(d.data_futura)}) e ${d.futuras>1?'foram lançadas':'foi lançada'} em hoje.`).join('<br>')}
+        <br><span class="text-amber-700">Provavelmente a coluna de data é de vencimento, não de pagamento. O valor continua somado — só a distribuição no gráfico muda.</span></div>`
+    : '';
 
   // ---- helpers de tabela
   const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b';
@@ -1407,24 +1452,41 @@ function renderVen(){
   const head = cs => `<tr>${cs.map((c,i)=>`<th class="${th} ${i?'':'!text-left'}">${c}</th>`).join('')}</tr>`;
   const barra = (v,m,cor) => `<span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden inline-block align-middle"><i class="block h-full" style="width:${m?Math.min(100,v/m*100):0}%;background:${cor}"></i></span>`;
 
-  // ---- origem awsales x comercial (dois blocos)
+  // ---- origem awsales x comercial (dois blocos, com a quebra por utm_source)
+  // Regra: utm_source contendo "awsales" vai para AwSales; TODO o resto, inclusive
+  // venda sem utm, vai para Comercial. A lista abaixo de cada bloco mostra de onde
+  // veio cada venda, para auditar a atribuição.
   const rsAw  = vs.filter(r=>r[K.origem]==='awsales');
   const rsCom = vs.filter(r=>r[K.origem]!=='awsales');
-  const utmsDe = rs => [...new Set(rs.map(r=>r[K.utm]||'—'))].slice(0,5).join(', ') || '—';
-  const bloco = (titulo, rs, cor, bg, utms) => { const c = S(rs,'bruto');
-    return `<div class="rounded-lg border ${bg} p-5">
+  const quebraUtm = rs => {
+    const m = {}; for(const r of rs){ const u = txtU(r[K.utm]); (m[u] ||= []).push(r); }
+    return Object.entries(m).sort((a,b)=>b[1].length-a[1].length);
+  };
+  const bloco = (titulo, rs, cor, bg, borda) => { const c = S(rs,'bruto'), q = quebraUtm(rs);
+    return `<div class="rounded-lg border ${borda} ${bg} p-5">
       <div class="text-[9.5px] font-bold uppercase tracking-wider ${cor}">${titulo}</div>
       <div class="text-[24px] font-bold ${cor} mt-1.5 tabnum">${brl(c)}</div>
-      <div class="h-1.5 rounded-full bg-white/70 overflow-hidden mt-2"><i class="block h-full" style="width:${pctN(c,cash)}%;background:currentColor" ></i></div>
+      <div class="h-1.5 rounded-full bg-white/70 overflow-hidden mt-2"><i class="block h-full" style="width:${pctN(c,cash)}%;background:currentColor"></i></div>
       <div class="grid grid-cols-3 gap-2 mt-3">
         <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Vendas</div><div class="text-[16px] font-bold text-zinc-900 tabnum">${fmt(rs.length)}</div></div>
         <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">% do caixa</div><div class="text-[16px] font-bold text-zinc-900 tabnum">${pct(c,cash,0)}</div></div>
         <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Ticket</div><div class="text-[16px] font-bold text-zinc-900 tabnum">${rs.length?brl(c/rs.length):'–'}</div></div>
       </div>
-      <div class="text-[10px] text-zinc-400 mt-2.5 leading-tight">utm_source: ${utms}</div></div>`; };
+      <div class="mt-3 pt-3 border-t border-white/60">
+        <div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Por utm_source</div>
+        ${q.length ? q.map(([u,rr])=>`<div class="flex items-baseline justify-between gap-3 text-[11px] py-[3px]">
+            <span class="text-zinc-700 truncate">${u==='—'?'<i class="text-zinc-400 not-italic">sem utm_source</i>':u}</span>
+            <span class="tabnum whitespace-nowrap"><b class="text-zinc-900">${fmt(rr.length)}</b> <span class="text-zinc-400">venda${rr.length>1?'s':''}</span> <span class="text-zinc-300">·</span> <span class="text-zinc-600">${brl(S(rr,'bruto'))}</span></span>
+          </div>`).join('') : '<div class="text-[11px] text-zinc-400">sem vendas</div>'}
+      </div></div>`; };
   $('vnOrig').innerHTML = `<div class="grid sm:grid-cols-2 gap-4">
-    ${bloco('AwSales · disparo', rsAw, 'text-indigo-700', 'border-indigo-200 bg-indigo-50/60', utmsDe(rsAw))}
-    ${bloco('Comercial · time', rsCom, 'text-emerald-700', 'border-emerald-200 bg-emerald-50/60', utmsDe(rsCom))}</div>`;
+      ${bloco('AwSales · disparo', rsAw, 'text-indigo-700', 'bg-indigo-50/60', 'border-indigo-200')}
+      ${bloco('Comercial · time', rsCom, 'text-emerald-700', 'bg-emerald-50/60', 'border-emerald-200')}
+    </div>
+    <div class="mt-3 text-[11px] ${rsAw.length+rsCom.length===nv?'text-zinc-500':'text-red-600 font-semibold'}">
+      ${fmt(rsAw.length)} + ${fmt(rsCom.length)} = <b>${fmt(rsAw.length+rsCom.length)}</b> de ${fmt(nv)} vendas${rsAw.length+rsCom.length===nv?' · fecha com o total':' · NÃO fecha com o total'}.
+      Tudo que não tem "awsales" no utm_source cai em Comercial, inclusive venda sem utm.
+    </div>`;
 
   // ---- forma de pagamento
   const PAG = [['cartao','Cartão','#6366f1'],['pix','PIX','#10b981'],['cartaopix','Cartão / PIX','#818cf8'],['boleto','Boleto (TMB)','#fb8c45'],['—','Não informado','#a1a1aa']];
