@@ -444,6 +444,24 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
      <section class="rounded-xl border bg-white px-7 py-7 mt-6">
       <div class="flex flex-wrap items-start justify-between gap-4">
        <div>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-target"/></svg>Pacing contra a meta</span>
+        <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Estamos no ritmo?</h2>
+        <p id="vnPaceSub" class="text-[13px] text-muted-foreground mt-1"></p>
+       </div>
+       <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Dias restantes</div>
+        <div class="mt-1"><span id="vnPaceDias" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
+      </div>
+      <div id="vnPaceCards" class="grid md:grid-cols-3 gap-4 mt-6"></div>
+      <div class="flex items-center justify-between flex-wrap gap-3 mt-8">
+       <div class="text-[11px] font-bold uppercase tracking-wider text-zinc-600">Acumulado x curva da meta</div>
+       <div id="vnPaceTabs" class="flex gap-1.5"></div>
+      </div>
+      <div id="vnPaceChart" class="overflow-x-auto mt-4"></div>
+     </section>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+       <div>
         <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Linha do tempo</span>
         <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Vendas e faturamento por dia</h2>
         <p id="vnChartSub" class="text-[13px] text-muted-foreground mt-1"></p>
@@ -654,9 +672,13 @@ const META = {
     vendas_lead_pct: 0.039,       // vendas sobre leads (era 0.05 na projeção inicial)
     cartao_pct: 0.55,             // parte das vendas no cartão (o resto é boleto)
     ticket_cartao: 2707.94,
-    ticket_boleto: 249.71,
+    ticket_boleto: 249.71,        // ENTRADA do boleto (é o que entra em caixa)
+    ticket_nominal: 2388.27,      // contrato cheio do boleto/TMB (usado no faturamento nominal)
     margem_pct: 0.60,
   },
+  // Janela de vendas, usada no pacing da aba Vendas.
+  // inicio vazio = primeiro dia com venda registrada.
+  periodo_vendas: { inicio: '', fim: '2026-10-12' },
 };
 // =========================
 const EMBED = null;
@@ -1179,6 +1201,125 @@ const PRIOS = {
   P3: 'Quero mas não tenho condição',
 };
 const PRIO_COR = { P1:'#10b981', P2:'#6366f1', P3:'#fb8c45', '—':'#a1a1aa' };
+// ======== PACING CONTRA A META ========
+let paceAba = 'cash';
+const PACE_METRICAS = [
+  { k:'cash',   rot:'Cash collected',       cor:'#10b981', money:true  },
+  { k:'nom',    rot:'Faturamento nominal',  cor:'#f59e0b', money:true  },
+  { k:'aplic',  rot:'Aplicações',           cor:'#6366f1', money:false },
+];
+function renderPace(V, K, vs, apRows, AK){
+  const F = META.funil, PV = META.periodo_vendas || {};
+  const metaLeadsN = META.matriz.leads.Total.at(-1);
+  const leadsR  = F.leads_real || sum(rows,'l') || metaLeadsN;
+  const showupR = F.showup_real || Math.floor(metaLeadsN * F.showup_pct);
+
+  // --- metas, derivadas do mesmo funil da aba Meta
+  const mAplic  = Math.round(showupR * F.aplic_pct);
+  const mVendas = Math.round(leadsR * F.vendas_lead_pct);
+  const vcM = Math.round(mVendas * F.cartao_pct), vbM = mVendas - vcM;
+  const mCash = vcM * F.ticket_cartao + vbM * F.ticket_boleto;
+  const mNom  = vcM * F.ticket_cartao + vbM * (F.ticket_nominal || F.ticket_boleto);
+
+  // --- janela
+  const diasV = [...new Set(vs.map(r=>r[K.dia]).filter(Boolean))].sort();
+  const diasA = apRows.length ? [...new Set(apRows.map(r=>r[AK.dia]).filter(Boolean))].sort() : [];
+  const ini = PV.inicio || [...diasV, ...diasA].sort()[0] || META.data_evento;
+  const fim = (PV.fim && PV.fim >= ini) ? PV.fim : (diasV.at(-1) || ini);
+  const ag  = new Date(); const hojeISO = new Date(ag.getTime()-ag.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const corte = hojeISO > fim ? fim : hojeISO < ini ? ini : hojeISO;
+  const dd = (a,b) => Math.round((new Date(b) - new Date(a))/86400000);
+  const totalDias = Math.max(1, dd(ini,fim) + 1);
+  const decorridos = Math.max(1, dd(ini,corte) + 1);
+  const restantes = Math.max(0, totalDias - decorridos);
+  const encerrado = hojeISO > fim;
+
+  $('vnPaceDias').textContent = encerrado ? 'encerrado' : fmt(restantes);
+  $('vnPaceSub').innerHTML = `Janela de ${ddmm(ini)} a ${ddmm(fim)} · <b class="text-zinc-900">dia ${fmt(decorridos)} de ${fmt(totalDias)}</b>. Metas vindas do funil da aba Meta (${pct(F.vendas_lead_pct,1,1)} sobre ${fmt(leadsR)} leads = ${fmt(mVendas)} vendas).`;
+
+  // --- séries diárias
+  const todosDias = []; for(let i=0;i<totalDias;i++){ const d = new Date(ini); d.setDate(d.getDate()+i); todosDias.push(d.toISOString().slice(0,10)); }
+  const serie = {
+    cash:  todosDias.map(d=>vs.filter(r=>r[K.dia]===d).reduce((a,r)=>a+r[K.bruto],0)),
+    nom:   todosDias.map(d=>vs.filter(r=>r[K.dia]===d).reduce((a,r)=>a+r[K.contratado],0)),
+    aplic: todosDias.map(d=>apRows.filter(r=>r[AK.dia]===d && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0)),
+  };
+  const METAS = { cash:mCash, nom:mNom, aplic:mAplic };
+
+  // --- cards
+  $('vnPaceCards').innerHTML = PACE_METRICAS.map(({k,rot,cor,money})=>{
+    const meta = METAS[k], feito = serie[k].reduce((a,b)=>a+b,0);
+    const v = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
+    const esperado = meta * decorridos / totalDias;
+    const ritmoAtual = feito / decorridos;
+    const falta = Math.max(0, meta - feito);
+    const precisa = restantes ? falta / restantes : falta;
+    const projecao = ritmoAtual * totalDias;
+    const noRitmo = feito >= esperado;
+    const bateu = feito >= meta;
+    const cls = bateu ? ['bg-emerald-50/60','border-emerald-200','text-emerald-700','meta batida']
+              : noRitmo ? ['bg-emerald-50/40','border-emerald-100','text-emerald-700','no ritmo']
+              : ['bg-red-50/40','border-red-100','text-red-600','atrasado'];
+    const p = pctN(feito, meta), pEsp = pctN(esperado, meta);
+    return `<div class="rounded-lg border ${cls[1]} ${cls[0]} p-5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">${rot}</div>
+        <span class="text-[9px] font-bold uppercase tracking-wider ${cls[2]}">${cls[3]}</span></div>
+      <div class="text-[23px] font-bold text-zinc-900 mt-1.5 tabnum">${v(feito)}</div>
+      <div class="text-[10.5px] text-zinc-500">de ${v(meta)} · <b class="${cls[2]}">${pct(feito,meta,0)}</b></div>
+      <div class="relative h-2 rounded-full bg-white border mt-2.5 overflow-hidden">
+        <i class="block h-full rounded-full" style="width:${Math.min(100,p)}%;background:${cor}"></i>
+        <i class="absolute inset-y-0 w-[2px] bg-zinc-900" style="left:${Math.min(100,pEsp)}%" title="esperado para hoje: ${v(esperado)}"></i></div>
+      <div class="text-[9.5px] text-zinc-400 mt-1">a marca preta é onde deveríamos estar hoje</div>
+      <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t">
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Fazendo por dia</div>
+          <div class="text-[14px] font-bold text-zinc-900 tabnum">${v(ritmoAtual)}</div></div>
+        <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">${restantes?'Precisa por dia':'Falta'}</div>
+          <div class="text-[14px] font-bold ${falta?cls[2]:'text-emerald-600'} tabnum">${falta?v(precisa):'–'}</div></div>
+      </div>
+      <div class="text-[10px] text-zinc-500 mt-2.5">${bateu ? `Já passou a meta em <b class="text-emerald-600">${v(feito-meta)}</b>.`
+        : restantes ? `Nesse ritmo fecha em <b class="text-zinc-800">${v(projecao)}</b> (${pct(projecao,meta,0)} da meta). Faltam <b class="text-zinc-800">${v(falta)}</b>.`
+        : `Fechou em ${pct(feito,meta,0)} da meta, <b class="text-red-600">${v(falta)}</b> abaixo.`}</div>
+    </div>`;
+  }).join('');
+
+  // --- abas do gráfico
+  $('vnPaceTabs').innerHTML = PACE_METRICAS.map(({k,rot})=>
+    `<button data-p="${k}" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border ${paceAba===k?'bg-zinc-900 text-white border-zinc-900':'bg-white text-zinc-600 hover:bg-zinc-50'}">${rot}</button>`).join('');
+  $('vnPaceTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ paceAba=b.dataset.p; renderVen(); });
+
+  // --- gráfico acumulado x curva da meta
+  const M = PACE_METRICAS.find(x=>x.k===paceAba), meta = METAS[paceAba];
+  const v = M.money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
+  const kv = x => M.money ? (x>=1000 ? 'R$ '+(x/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(x)) : fmt(Math.round(x));
+  const acc = []; serie[paceAba].reduce((a,x,i)=>(acc[i]=a+x),0);
+  const n = todosDias.length, W = 1000, H = 280, top = 40, base = 232, padL = 0;
+  const x = i => n>1 ? padL + i*((W-padL)/(n-1)) : W/2;
+  const max = Math.max(meta, ...acc) * 1.06 || 1;
+  const y = val => base - (val/max)*(base-top);
+  const curva = todosDias.map((_,i)=> meta*(i+1)/n);
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px;font-family:Inter,sans-serif" role="img" aria-label="Acumulado contra a curva da meta">`;
+  g += `<line x1="0" x2="${W}" y1="${y(meta)}" y2="${y(meta)}" stroke="#d4d4d8" stroke-dasharray="4 4"/>`;
+  g += `<text x="${W}" y="${y(meta)-7}" text-anchor="end" font-size="10" font-weight="700" fill="#71717a">meta ${v(meta)}</text>`;
+  g += `<polyline fill="none" stroke="#a1a1aa" stroke-width="2" stroke-dasharray="5 4" points="${todosDias.map((_,i)=>`${x(i)},${y(curva[i])}`).join(' ')}"/>`;
+  // desenha até hoje, ou até o último dia que tem dado (linha dataada à frente aparece em vez de sumir)
+  let ultimoComDado = -1; serie[paceAba].forEach((x,i)=>{ if(x) ultimoComDado = i; });
+  const ate = Math.min(n-1, Math.max(0, dd(ini,corte), ultimoComDado));
+  const reais = todosDias.slice(0, ate+1);
+  if(reais.length>1){
+    g += `<polygon points="${x(0)},${base} ${reais.map((_,i)=>`${x(i)},${y(acc[i])}`).join(' ')} ${x(ate)},${base}" fill="${M.cor}" opacity=".12"/>`;
+    g += `<polyline fill="none" stroke="${M.cor}" stroke-width="3" stroke-linejoin="round" points="${reais.map((_,i)=>`${x(i)},${y(acc[i])}`).join(' ')}"/>`;
+  }
+  reais.forEach((d,i)=>{ const atras = acc[i] < curva[i];
+    g += `<circle cx="${x(i)}" cy="${y(acc[i])}" r="${i===ate?5:3.5}" fill="#fff" stroke="${M.cor}" stroke-width="${i===ate?3:2}"><title>${ddmm(d)} · acumulado ${v(acc[i])} · meta do dia ${v(curva[i])}${atras?' (atrás)':' (na frente)'}</title></circle>`; });
+  if(reais.length) g += `<text x="${x(ate)}" y="${y(acc[ate])-13}" text-anchor="${ate>n-3?'end':'middle'}" font-size="11" font-weight="700" fill="${M.cor}">${kv(acc[ate])}</text>`;
+  todosDias.forEach((d,i)=>{ if(n>14 && i%2 && i!==n-1) return;
+    g += `<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="9.5" font-weight="600" fill="${i===ate?'#f59e0b':'#a1a1aa'}">${dm(d)}</text>`; });
+  g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/>`;
+  g += `<rect x="0" y="10" width="9" height="9" rx="2" fill="${M.cor}"/><text x="14" y="18" font-size="9.5" font-weight="600" fill="#52525b">realizado</text>`;
+  g += `<line x1="86" x2="104" y1="15" y2="15" stroke="#a1a1aa" stroke-width="2" stroke-dasharray="5 4"/><text x="109" y="18" font-size="9.5" font-weight="600" fill="#52525b">curva da meta</text></svg>`;
+  $('vnPaceChart').innerHTML = g;
+}
 function renderVen(){
   const box = $('vnStats'), V = DATA.vendas;
   if(!V || !V.rows || !V.rows.length){
@@ -1188,6 +1329,9 @@ function renderVen(){
     ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
     $('vnBest').textContent = '–'; $('vnChart').innerHTML = '';
     $('vnPagBar').innerHTML = ''; renderDiag(V && V.diag);
+    $('vnPaceCards').innerHTML = '<p class="col-span-full text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
+    $('vnPaceChart').innerHTML = ''; $('vnPaceTabs').innerHTML = '';
+    $('vnPaceSub').textContent = ''; $('vnPaceDias').textContent = '–';
     ['vnPrio','vnPag','vnCons','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML=`<tr><td class="py-4 text-[12px] text-muted-foreground">${i==='vnPrio'?'Aguardando a aba Aplicações.':'Aguardando as abas de transação.'}</td></tr>`);
     $('vnOrig').innerHTML = '<p class="text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
     return;
@@ -1207,6 +1351,8 @@ function renderVen(){
     apTot  = apRows.reduce((a,r)=>a+(+r[AK.n]||0),0);
     apComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0); }
   const apInc = apTot - apComp;
+
+  renderPace(V, K, vs, apRows, AK);
 
   // ---- cards
   const porPlat = by(vs,'plat');
