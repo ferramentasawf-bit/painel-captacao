@@ -416,6 +416,11 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
 
     <div id="v-vendas" hidden>
      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-target"/></svg>Faturamento geral</div>
+       <div id="vnGer" class="text-[26px] font-bold text-amber-600 mt-2 tabnum"></div>
+       <div id="vnGerSub" class="text-[9.5px] text-amber-700/80 mt-1 leading-relaxed"></div>
+      </div>
       <div class="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 min-h-[130px]">
        <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Cash collected</div>
        <div id="vnCash" class="text-[26px] font-bold text-emerald-600 mt-2 tabnum"></div>
@@ -425,11 +430,6 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
        <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Faturamento líquido</div>
        <div id="vnLiq" class="text-[26px] font-bold text-zinc-900 mt-2 tabnum"></div>
        <div id="vnLiqSub" class="text-[9.5px] text-muted-foreground mt-1 leading-relaxed"></div>
-      </div>
-      <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[130px]">
-       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-target"/></svg>Faturamento geral</div>
-       <div id="vnGer" class="text-[26px] font-bold text-amber-600 mt-2 tabnum"></div>
-       <div id="vnGerSub" class="text-[9.5px] text-amber-700/80 mt-1 leading-relaxed"></div>
       </div>
       <div class="rounded-lg border bg-white p-4 min-h-[130px]">
        <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Conversão</div>
@@ -453,18 +453,26 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
       <div id="vnChart" class="overflow-x-auto mt-6"></div>
      </section>
 
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Ficha de interesse</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Prioridade da aplicação</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Quanto cada resposta da ficha converteu em venda.</p>
+      <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPrio"></tbody></table></div>
+     </section>
+
      <div class="grid lg:grid-cols-2 gap-6 mt-6">
-      <section class="rounded-xl border bg-white px-7 py-7">
-       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Ficha de interesse</span>
-       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Prioridade da aplicação</h2>
-       <p class="text-[13px] text-muted-foreground mt-1">Quanto cada resposta da ficha converteu em venda.</p>
-       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPrio"></tbody></table></div>
-      </section>
       <section class="rounded-xl border bg-white px-7 py-7">
        <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>Origem da venda</span>
        <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">AwSales x Comercial</h2>
        <p class="text-[13px] text-muted-foreground mt-1">Venda atribuída ao disparo contra venda trabalhada pelo time.</p>
        <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnOrig"></tbody></table></div>
+      </section>
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-cart"/></svg>Checkout</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Forma de pagamento</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Cartão, PIX e boleto em número de vendas e em caixa.</p>
+       <div id="vnPagBar" class="flex h-2.5 rounded-full overflow-hidden bg-zinc-100 mt-5"></div>
+       <div class="overflow-x-auto mt-4"><table class="w-full text-[12px]"><tbody id="vnPag"></tbody></table></div>
       </section>
      </div>
 
@@ -1171,7 +1179,8 @@ function renderVen(){
     ['vnCash','vnLiq','vnGer','vnConv'].forEach(i=>$(i).textContent='–');
     ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
     $('vnBest').textContent = '–'; $('vnChart').innerHTML = '';
-    ['vnPrio','vnOrig','vnCons','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML=`<tr><td class="py-4 text-[12px] text-muted-foreground">${i==='vnPrio'?'Aguardando a aba Aplicações.':'Aguardando as abas de transação.'}</td></tr>`);
+    $('vnPagBar').innerHTML = '';
+    ['vnPrio','vnOrig','vnPag','vnCons','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML=`<tr><td class="py-4 text-[12px] text-muted-foreground">${i==='vnPrio'?'Aguardando a aba Aplicações.':'Aguardando as abas de transação.'}</td></tr>`);
     return;
   }
   const K = {}; V.cols.forEach((c,i)=>K[c]=i);
@@ -1208,10 +1217,10 @@ function renderVen(){
     <div class="text-[22px] font-bold ${cls} mt-1 tabnum">${val}</div>
     <div class="text-[9.5px] text-muted-foreground mt-1">${sub}</div></div>`;
   box.innerHTML =
-      stat('Aplicações completas', fmt(apComp), apTot ? `${fmt(apTot)} no total · ${fmt(apInc)} incompletas` : 'aguardando a aba Aplicações')
+      stat('Vendas confirmadas', fmt(nv), `${fmt(fecharam)} leads fecharam${(V.sem_match||0)?` · ${fmt(V.sem_match)} sem match na base`:''}`)
+    + stat('Aplicações completas', fmt(apComp), apTot ? `${fmt(apTot)} no total · ${fmt(apInc)} incompletas` : 'aguardando a aba Aplicações')
     + stat('Aplicação → venda', apComp ? pct(fecharam,apComp) : '–', apComp ? `${fmt(fecharam)} de ${fmt(apComp)} fichas completas` : '—', 'text-emerald-600')
-    + stat('Ticket médio contratado', brl(nv?ger/nv:0), `${brl(nv?cash/nv:0)} em caixa por venda`, 'text-amber-500')
-    + stat('Vendas sem match na base', fmt(V.sem_match||0), (V.sem_match||0) ? 'compradores que não achamos na captação' : 'todas as vendas casaram com um lead');
+    + stat('Ticket médio contratado', brl(nv?ger/nv:0), `${brl(nv?cash/nv:0)} em caixa por venda`, 'text-amber-500');
 
   // ---- gráfico: barras de vendas + linha de faturamento
   const dias = [...new Set(vs.map(r=>r[K.dia]))].sort();
@@ -1267,6 +1276,24 @@ function renderVen(){
       <td class="${td}">${barra(c,cash,'#6366f1')} <b class="ml-1.5">${pct(c,cash,0)}</b></td>
       <td class="${td} text-zinc-600">${brl(c/rs.length)}</td></tr>`; }
   $('vnOrig').innerHTML = t;
+
+  // ---- forma de pagamento
+  const PAG = [['cartao','Cartão','#6366f1'],['pix','PIX','#10b981'],['boleto','Boleto','#fb8c45'],['—','Não informado','#a1a1aa']];
+  const pg = by(vs,'pagto');
+  t = head(['Forma','Vendas','% das vendas','Em caixa','% do caixa','Ticket']);
+  let barra2 = '';
+  for(const [k,nome,cor] of PAG){ const rs = pg[k]; if(!rs || !rs.length) continue;
+    const c = S(rs,'bruto');
+    barra2 += `<i class="block h-full" style="width:${rs.length/nv*100}%;background:${cor}" title="${nome}: ${fmt(rs.length)} vendas"></i>`;
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2"><i class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${cor}"></i>${nome}</span></td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td}">${barra(rs.length,nv,cor)} <b class="ml-1.5">${pct(rs.length,nv)}</b></td>
+      <td class="${td} font-semibold text-emerald-600">${brl(c)}</td>
+      <td class="${td} font-semibold">${pct(c,cash)}</td>
+      <td class="${td} text-zinc-600">${brl(c/rs.length)}</td></tr>`; }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold">100,0%</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold">100,0%</td><td class="${td} font-bold">${brl(cash/nv)}</td></tr>`;
+  $('vnPag').innerHTML = t;
+  $('vnPagBar').innerHTML = barra2;
 
   // ---- consultores
   const cons = by(vs,'consultor'), ordC = Object.keys(cons).sort((a,b)=>S(cons[b],'bruto')-S(cons[a],'bruto'));
