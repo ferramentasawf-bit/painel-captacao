@@ -542,12 +542,15 @@ const META = {
   disparos: 30000,                // Disparos + Aw Sales
   sms_ligacao: 2500,              // SMS Flash + Ligação
   imposto_pct: 0.11,              // Imposto (sobre o faturamento)
-  // Funil comercial (cenário ideal)
+  // Funil comercial
   funil: {
-    showup_pct: 0.50,             // show-up sobre leads
+    leads_real: 9279,             // leads AFERIDOS no fechamento. 0 ou null = usa o que vem da planilha
+    showup_pct: 0.50,             // show-up projetado sobre leads
+    showup_real: 4326,            // show-up AFERIDO (leads ao vivo). 0 ou null = só projeção
+    aplic_dia1_real: 926,         // aplicações ÚNICAS do 1º dia (aferido). 0 ou null = só projeção
     aplic_dia1_pct: 0.22,         // aplicações no 1º dia sobre show-up
     aplic_pct: 0.61,              // aplicações totais sobre show-up
-    vendas_lead_pct: 0.05,        // vendas sobre leads
+    vendas_lead_pct: 0.039,       // vendas sobre leads (era 0.05 na projeção inicial)
     cartao_pct: 0.55,             // parte das vendas no cartão (o resto é boleto)
     ticket_cartao: 2707.94,
     ticket_boleto: 249.71,
@@ -948,11 +951,20 @@ function renderMeta(){
   $('mtFatSub').textContent = `${brl(fat)} rastreado + ${brl(M.faturamento_strack)} sem track · ${fmt(M.matriz.compradores.Total.at(-1))} compradores`;
   $('mtReal').textContent = brl(real);
   $('mtRealSub').textContent = `${pct(real,fatTot)} do faturamento total, após custos e impostos`;
-  const F = M.funil, showup = Math.floor(metaLeads*F.showup_pct), ap1 = Math.round(showup*F.aplic_dia1_pct), ap = Math.round(showup*F.aplic_pct);
+  const F = M.funil;
+  // --- cenário META (projeção original, partindo dos 9.055 leads de meta) ---
+  const showup = Math.floor(metaLeads*F.showup_pct), ap1 = Math.round(showup*F.aplic_dia1_pct), ap = Math.round(showup*F.aplic_pct);
   const vendas = Math.round(metaLeads*F.vendas_lead_pct), vc = Math.round(vendas*F.cartao_pct), vb = vendas - vc;
   const fc = vc*F.ticket_cartao, fb = vb*F.ticket_boleto, fg = fc+fb, mg = fg*F.margem_pct;
-  $('mtFunFat').textContent = brl(fg);
-  $('mtFunSub').textContent = `${fmt(vendas)} vendas · margem de ${brl(mg)}`;
+  // --- cenário REAL (show-up e aplicações do 1º dia aferidos + leads captados) ---
+  const leadsR  = F.leads_real || L || metaLeads;
+  const showupR = F.showup_real || showup;
+  const ap1R    = F.aplic_dia1_real || Math.round(showupR*F.aplic_dia1_pct);
+  const apR     = Math.round(showupR*F.aplic_pct);
+  const vendasR = Math.round(leadsR*F.vendas_lead_pct), vcR = Math.round(vendasR*F.cartao_pct), vbR = vendasR - vcR;
+  const fcR = vcR*F.ticket_cartao, fbR = vbR*F.ticket_boleto, fgR = fcR+fbR, mgR = fgR*F.margem_pct;
+  $('mtFunFat').textContent = brl(fgR);
+  $('mtFunSub').textContent = `${fmt(vendasR)} vendas a ${pct(F.vendas_lead_pct,1,1)} · margem de ${brl(mgR)} · com a meta de leads seria ${brl(fg)}`;
 
   // ritmo
   const dias = [...new Set(rows.map(r=>r[C.dia]))].sort();
@@ -1017,23 +1029,29 @@ function renderMeta(){
   ].join('');
 
   // funil
-  $('mtFunDesc').textContent = `Cenário ideal com as premissas do funil comercial, partindo da meta de ${fmt(metaLeads)} leads.`;
-  $('mtMargem').textContent = brl(mg);
+  $('mtFunDesc').innerHTML = `Projeção recalculada sobre os números aferidos do evento: <b class="text-zinc-900">${fmt(leadsR)} leads captados</b>, <b class="text-zinc-900">${fmt(showupR)} ao vivo</b> e <b class="text-zinc-900">${fmt(ap1R)} aplicações únicas no 1º dia</b>. Conversão de <b class="text-zinc-900">${pct(F.vendas_lead_pct,1,1)}</b> sobre leads.`;
+  $('mtMargem').textContent = brl(mgR);
+  const AF = '<span class="ml-1.5 align-middle inline-block rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">aferido</span>';
+  const gc = 'grid grid-cols-[158px_1fr_148px_176px] items-center gap-4';
   const etapas = [
-    ['Leads', metaLeads, 'meta', L, '#3b82f6'],
-    ['Show-up', showup, `${pct(F.showup_pct,1,0)} dos leads`, null, '#6366f1'],
-    ['Aplicações no 1º dia', ap1, `${pct(F.aplic_dia1_pct,1,0)} do show-up`, null, '#818cf8'],
-    ['Aplicações totais', ap, `${pct(F.aplic_pct,1,0)} do show-up`, null, '#a78bfa'],
-    ['Vendas', vendas, `${pct(F.vendas_lead_pct,1,0)} dos leads · ${pct(vendas,ap,0)} das aplicações`, null, '#10b981'],
-    ['Vendas no cartão', vc, `${pct(F.cartao_pct,1,0)} das vendas`, null, '#34d399'],
-    ['Vendas no boleto', vb, `${pct(1-F.cartao_pct,1,0)} das vendas`, null, '#fb8c45'],
+    ['Leads',             metaLeads, 'meta de captação',                                 leadsR,  `${pct(leadsR,metaLeads,1)} da meta`,            '#3b82f6', F.leads_real?1:0],
+    ['Show-up',           showup,    `${pct(F.showup_pct,1,0)} dos leads de meta`,       showupR, `${pct(showupR,leadsR,1)} dos leads captados`,   '#6366f1', 1],
+    ['Aplicações 1º dia', ap1,       `${pct(F.aplic_dia1_pct,1,0)} do show-up`,          ap1R,    `${pct(ap1R,showupR,1)} do show real · únicas`, '#818cf8', 1],
+    ['Aplicações totais', ap,        `${pct(F.aplic_pct,1,0)} do show-up`,               apR,     `${pct(F.aplic_pct,1,0)} do show real`,          '#a78bfa', 0],
+    ['Vendas',            vendas,    `${pct(F.vendas_lead_pct,1,1)} dos leads de meta`,  vendasR, `${pct(vendasR,apR,1)} das aplicações totais`,   '#10b981', 0],
+    ['Vendas no cartão',  vc,        `${pct(F.cartao_pct,1,0)} das vendas`,              vcR,     `${pct(F.cartao_pct,1,0)} das vendas`,           '#34d399', 0],
+    ['Vendas no boleto',  vb,        `${pct(1-F.cartao_pct,1,0)} das vendas`,            vbR,     `${pct(1-F.cartao_pct,1,0)} das vendas`,         '#fb8c45', 0],
   ];
-  $('mtFunil').innerHTML = etapas.map(([n,v,d,r,c])=>`<div class="grid grid-cols-[150px_1fr_190px] items-center gap-4 text-[12px]">
+  $('mtFunil').innerHTML = `<div class="${gc} text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1.5 border-b"><span>Etapa</span><span></span><span class="text-right">Projeção da meta</span><span class="text-right">Real / reprojetado</span></div>`
+   + etapas.map(([n,v,d,r,dr,c,af])=>`<div class="${gc} text-[12px]">
     <span class="font-semibold text-zinc-800">${n}</span>
-    <span class="h-7 bg-zinc-50 rounded overflow-hidden relative"><i class="block h-full rounded" style="width:${Math.max(2,v/metaLeads*100)}%;background:${c}"></i>${r!==null?`<i class="absolute inset-y-0 left-0 border-r-2 border-zinc-900" style="width:${Math.min(100,r/metaLeads*100)}%" title="Realizado: ${fmt(r)}"></i>`:''}</span>
-    <span class="text-right tabnum"><b class="text-[14px] text-zinc-900">${fmt(v)}</b><div class="text-[10px] text-zinc-500">${r!==null?`realizado ${fmt(r)} (${pct(r,v,0)})`:d}</div></span></div>`).join('');
-  const box = (l,v,cls) => `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-4"><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${l}</div><div class="text-[20px] font-bold ${cls} mt-1 tabnum">${v}</div></div>`;
-  $('mtFunFin').innerHTML = box('Faturamento cartão', brl(fc), 'text-zinc-900') + box('Faturamento boleto', brl(fb), 'text-zinc-900') + box('Faturamento geral', brl(fg), 'text-amber-500') + box(`Margem (${pct(F.margem_pct,1,0)})`, brl(mg), 'text-emerald-600');
+    <span class="h-7 bg-zinc-50 rounded overflow-hidden relative">
+      <i class="block h-full rounded" style="width:${Math.max(2,v/metaLeads*100)}%;background:${c};opacity:.22"></i>
+      <i class="absolute inset-y-0 left-0 rounded" style="width:${Math.max(2,Math.min(100,r/metaLeads*100))}%;background:${c}"></i></span>
+    <span class="text-right tabnum"><b class="text-[13px] font-semibold text-zinc-400">${fmt(v)}</b><div class="text-[10px] text-zinc-400">${d}</div></span>
+    <span class="text-right tabnum"><b class="text-[15px] ${r>=v?'text-emerald-600':'text-zinc-900'}">${fmt(r)}</b>${af?AF:''}<div class="text-[10px] text-zinc-500">${dr}</div></span></div>`).join('');
+  const box = (l,v,sub,cls) => `<div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-4"><div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${l}</div><div class="text-[20px] font-bold ${cls} mt-1 tabnum">${v}</div><div class="text-[9.5px] text-zinc-500 mt-1 tabnum">${sub}</div></div>`;
+  $('mtFunFin').innerHTML = box('Faturamento cartão', brl(fcR), `com a meta de leads ${brl(fc)}`, 'text-zinc-900') + box('Faturamento boleto', brl(fbR), `com a meta de leads ${brl(fb)}`, 'text-zinc-900') + box('Faturamento geral', brl(fgR), `${pct(fgR,fg,0)} do cenário com a meta batida`, 'text-amber-500') + box(`Margem (${pct(F.margem_pct,1,0)})`, brl(mgR), `com a meta de leads ${brl(mg)}`, 'text-emerald-600');
 }
 
 function bindCanal(id){
