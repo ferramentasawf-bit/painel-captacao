@@ -1224,10 +1224,22 @@ function renderVen(){
     <div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${lbl}</div>
     <div class="text-[22px] font-bold ${cls} mt-1 tabnum">${val}</div>
     <div class="text-[9.5px] text-muted-foreground mt-1">${sub}</div></div>`;
+  const cardAplic = `<div class="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4">
+    <div class="text-[9px] font-bold uppercase tracking-wider text-indigo-700">Aplicações recebidas</div>
+    <div class="text-[22px] font-bold text-indigo-700 mt-1 tabnum">${fmt(apTot)}</div>
+    <div class="flex h-1.5 rounded-full overflow-hidden bg-white border border-indigo-100 mt-2">
+      <i class="block h-full bg-indigo-600" style="width:${apTot?apComp/apTot*100:0}%"></i>
+      <i class="block h-full bg-indigo-200" style="width:${apTot?apInc/apTot*100:0}%"></i></div>
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-indigo-700">Completas</div>
+        <div class="text-[15px] font-bold text-indigo-700 tabnum">${fmt(apComp)}<span class="text-[10px] font-semibold text-indigo-400 ml-1">${apTot?pct(apComp,apTot,0):'–'}</span></div></div>
+      <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Incompletas</div>
+        <div class="text-[15px] font-bold text-zinc-500 tabnum">${fmt(apInc)}<span class="text-[10px] font-semibold text-zinc-400 ml-1">${apTot?pct(apInc,apTot,0):'–'}</span></div></div>
+    </div></div>`;
   box.innerHTML =
       stat('Vendas confirmadas', fmt(nv), `${fmt(fecharam)} leads fecharam${(V.sem_match||0)?` · ${fmt(V.sem_match)} sem match na base`:''}`)
-    + stat('Aplicações completas', fmt(apComp), apTot ? `${fmt(apTot)} no total · ${fmt(apInc)} incompletas` : 'aguardando a aba Aplicações')
-    + stat('Aplicação → venda', apComp ? pct(fecharam,apComp) : '–', apComp ? `${fmt(fecharam)} de ${fmt(apComp)} fichas completas` : '—', 'text-emerald-600')
+    + cardAplic
+    + stat('Aplicação → venda', apComp ? pct(fecharam,apComp) : '–', apComp ? `${fmt(fecharam)} de ${fmt(apComp)} fichas completas` : 'aguardando a aba Aplicações', 'text-emerald-600')
     + stat('Ticket médio contratado', brl(nv?ger/nv:0), `${brl(nv?cash/nv:0)} em caixa por venda`, 'text-amber-500');
 
   // ---- gráfico: barras de vendas + linha de faturamento
@@ -1237,21 +1249,30 @@ function renderVen(){
   const iBest = dR.indexOf(Math.max(...dR));
   $('vnBest').textContent = dias.length ? `${dm(dias[iBest])} · ${brl(dR[iBest])}` : '–';
   $('vnChartSub').textContent = `${fmt(nv)} vendas e ${brl(cash)} em caixa entre ${ddmm(dias[0])} e ${ddmm(dias.at(-1))}.`;
-  const n = dias.length, W = 1000, H = 268, base = 224, top = 54, gap = 3;
+  const PLAT = [['assiny','Assiny','#6366f1'],['hotmart','Hotmart','#8b5cf6'],['tmb','TMB','#f59e0b']];
+  const presentes = PLAT.filter(([k])=>vs.some(r=>r[K.plat]===k));
+  const n = dias.length, W = 1000, H = 290, base = 232, top = 62, gap = 4;
   const bw = (W - gap*(n-1))/n, maxN = Math.max(...dN,1), maxR = Math.max(...dR,1);
   const yB = v => base - (v/maxN)*(base-top), yL = v => base - (v/maxR)*(base-top);
-  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px;font-family:Inter,sans-serif" role="img" aria-label="Vendas e faturamento por dia">`;
-  dias.forEach((d,i)=>{ const x = i*(bw+gap), cx = x+bw/2;
-    g += `<rect x="${x}" y="${yB(dN[i])}" width="${bw}" height="${base-yB(dN[i])}" rx="2" fill="#6366f1" opacity=".85"><title>${fmt(dN[i])} vendas em ${ddmm(d)} · ${brl(dR[i])}</title></rect>`;
-    g += `<text x="${cx}" y="${yB(dN[i])-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
-    g += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="9" font-weight="600" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`; });
+  const kbrl = v => v >= 1000 ? (v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:680px;font-family:Inter,sans-serif" role="img" aria-label="Vendas por plataforma e faturamento por dia">`;
+  dias.forEach((d,i)=>{ const x = i*(bw+gap), cx = x+bw/2, rsD = vs.filter(r=>r[K.dia]===d);
+    let acc = 0;
+    for(const [k,nome,cor] of presentes){ const q = rsD.filter(r=>r[K.plat]===k).length; if(!q) continue;
+      const y0 = yB(acc), y1 = yB(acc+q);
+      g += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(0,y0-y1)}" fill="${cor}"><title>${ddmm(d)} · ${nome}: ${fmt(q)} vendas · ${brl(rsD.filter(r=>r[K.plat]===k).reduce((a,r)=>a+r[K.bruto],0))}</title></rect>`;
+      if(y0-y1 > 15) g += `<text x="${cx}" y="${(y0+y1)/2+3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">${fmt(q)}</text>`;
+      acc += q; }
+    g += `<text x="${cx}" y="${yB(dN[i])-7}" text-anchor="middle" font-size="11" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
+    g += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="9.5" font-weight="600" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`; });
   if(n>1) g += `<polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round" points="${dias.map((_,i)=>`${i*(bw+gap)+bw/2},${yL(dR[i])}`).join(' ')}"/>`;
   dias.forEach((d,i)=>{ const cx = i*(bw+gap)+bw/2;
-    g += `<circle cx="${cx}" cy="${yL(dR[i])}" r="3.5" fill="#fff" stroke="#10b981" stroke-width="2"><title>${brl(dR[i])} em ${ddmm(d)}</title></circle>`;
-    g += `<text x="${cx}" y="${yL(dR[i])-10}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#059669">${(dR[i]/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})}k</text>`; });
+    g += `<circle cx="${cx}" cy="${yL(dR[i])}" r="4" fill="#fff" stroke="#10b981" stroke-width="2.5"><title>${brl(dR[i])} em ${ddmm(d)}</title></circle>`;
+    g += `<text x="${cx}" y="${yL(dR[i])-11}" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">${kbrl(dR[i])}</text>`; });
   g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/>`;
-  g += `<rect x="0" y="12" width="9" height="9" rx="2" fill="#6366f1"/><text x="14" y="20" font-size="9.5" font-weight="600" fill="#52525b">vendas</text>`;
-  g += `<line x1="72" x2="88" y1="17" y2="17" stroke="#10b981" stroke-width="2.5"/><text x="93" y="20" font-size="9.5" font-weight="600" fill="#52525b">faturamento em caixa</text></svg>`;
+  let lx = 0;
+  for(const [,nome,cor] of presentes){ g += `<rect x="${lx}" y="12" width="9" height="9" rx="2" fill="${cor}"/><text x="${lx+14}" y="20" font-size="9.5" font-weight="600" fill="#52525b">${nome}</text>`; lx += 24 + nome.length*5.8; }
+  g += `<line x1="${lx+2}" x2="${lx+18}" y1="17" y2="17" stroke="#10b981" stroke-width="2.5"/><text x="${lx+23}" y="20" font-size="9.5" font-weight="600" fill="#52525b">faturamento em caixa</text></svg>`;
   $('vnChart').innerHTML = g;
 
   // ---- helpers de tabela
@@ -1262,24 +1283,30 @@ function renderVen(){
 
   // ---- prioridade da ficha
   const apPorPrio = k => apRows.filter(r=>r[AK.prio]===k && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
-  let t = head(['Resposta','Aplicações','Vendas','Conversão','Em caixa','Ticket']);
+  let t = head(['Resposta','Aplicações','% das aplicações','Compradores','Conversão','Em caixa','Ticket']);
+  let somaAp = 0, somaV = 0, somaC = 0;
   for(const k of ['P1','P2','P3','—']){
     const rs = vs.filter(r=>r[K.prio]===k), ap = apPorPrio(k);
     if(!rs.length && !ap) continue;
-    const c = S(rs,'bruto');
-    t += `<tr><td class="${td} !text-left"><span class="inline-flex items-center gap-2"><i class="w-2 h-2 rounded-full shrink-0" style="background:${PRIO_COR[k]||'#a1a1aa'}"></i><span><b class="text-zinc-900">${k}</b><div class="text-[10px] text-zinc-500 leading-tight">${PRIOS[k]||'sem resposta registrada'}</div></span></span></td>
-      <td class="${td} text-zinc-600">${fmt(ap)}</td><td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
-      <td class="${td}">${ap?`${barra(rs.length,ap,PRIO_COR[k]||'#a1a1aa')} <b class="ml-1.5">${pct(rs.length,ap)}</b>`:'–'}</td>
+    const c = S(rs,'bruto'); somaAp += ap; somaV += rs.length; somaC += c;
+    const cor = PRIO_COR[k]||'#a1a1aa';
+    t += `<tr><td class="${td} !text-left"><span class="inline-flex items-center gap-2"><i class="w-2 h-2 rounded-full shrink-0" style="background:${cor}"></i><span><b class="text-zinc-900">${k}</b><div class="text-[10px] text-zinc-500 leading-tight">${PRIOS[k]||'sem resposta registrada'}</div></span></span></td>
+      <td class="${td} text-zinc-600">${fmt(ap)}</td>
+      <td class="${td}">${apComp?`${barra(ap,apComp,cor)} <b class="ml-1.5">${pct(ap,apComp)}</b>`:'–'}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td} font-semibold">${ap?pct(rs.length,ap):'–'}</td>
       <td class="${td} font-semibold text-emerald-600">${brl(c)}</td><td class="${td} text-zinc-600">${rs.length?brl(c/rs.length):'–'}</td></tr>`;
   }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(somaAp)}</td><td class="${td} font-bold">${apComp?pct(somaAp,apComp,0):'–'}</td><td class="${td} font-bold">${fmt(somaV)}</td><td class="${td} font-bold">${somaAp?pct(somaV,somaAp):'–'}</td><td class="${td} font-bold text-emerald-600">${brl(somaC)}</td><td class="${td} font-bold">${somaV?brl(somaC/somaV):'–'}</td></tr>`;
   $('vnPrio').innerHTML = t;
 
   // ---- origem awsales x comercial
   const orig = by(vs,'origem'), ordO = Object.keys(orig).sort((a,b)=>S(orig[b],'bruto')-S(orig[a],'bruto'));
   const nomeO = { awsales:'AwSales (disparo)', comercial:'Comercial (time)' };
+  const utmsDe = rs => [...new Set(rs.map(r=>r[K.utm]||'—'))].slice(0,4).join(', ');
   t = head(['Origem','Vendas','Em caixa','% do caixa','Ticket']);
   for(const o of ordO){ const rs = orig[o], c = S(rs,'bruto');
-    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${nomeO[o]||o}</td>
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${nomeO[o]||o}<div class="text-[10px] font-normal text-zinc-400 leading-tight">utm_source: ${utmsDe(rs)}</div></td>
       <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td><td class="${td} font-semibold text-emerald-600">${brl(c)}</td>
       <td class="${td}">${barra(c,cash,'#6366f1')} <b class="ml-1.5">${pct(c,cash,0)}</b></td>
       <td class="${td} text-zinc-600">${brl(c/rs.length)}</td></tr>`; }
@@ -1373,13 +1400,17 @@ function renderDiag(diag){
       <div class="flex items-center justify-between gap-2">
         <b class="text-[12px] text-zinc-900">${tab}</b>
         <span class="text-[10px] ${faltando.length?'text-red-600 font-bold':'text-zinc-500'}">${faltando.length?'falta coluna':'ok'}</span></div>
-      <div class="text-[10px] text-zinc-500 mt-0.5">${fmt(d.linhas)} linhas${d.ignorados?` · ${fmt(d.ignorados)} ignoradas`:''}</div>
+      <div class="text-[10px] text-zinc-500 mt-0.5">${fmt(d.linhas)} linhas${d.ignorados?` · ${fmt(d.ignorados)} ignoradas`:''}${d.sem_comprador?` (${fmt(d.sem_comprador)} sem comprador)`:''}</div>
+      ${d.conferencia?`<div class="mt-2 rounded px-2 py-1.5 text-[10px] border ${d.conferencia.bate?'bg-emerald-50 border-emerald-100 text-emerald-800':'bg-red-50 border-red-100 text-red-700'}">
+        <b>${d.conferencia.bate?'Confere com o total da aba':'NÃO bate com o total da aba'}</b><br>
+        planilha ${brl(d.conferencia.bruto,2)} · somado ${brl(d.conferencia.calculado||0,2)}${d.conferencia.bate?'':` · diferença ${brl(d.conferencia.diferenca||0,2)}`}</div>`:''}
       <div class="mt-3 flex flex-col gap-1">${Object.entries(d.colunas).map(([k,c])=>{
         const crit = ess.includes(k);
         if(!c && !crit) return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="text-zinc-400">${DIAG_ROTULO[k]||k}</span><span class="text-zinc-300">—</span></div>`;
         return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="${crit?'font-semibold text-zinc-700':'text-zinc-500'}">${DIAG_ROTULO[k]||k}</span><span class="${c?'text-zinc-900 font-medium text-right':'text-red-600 font-bold'}">${c||'não encontrada'}</span></div>`;
       }).join('')}</div>
       ${rec.length?`<div class="mt-3 text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1.5">Valores recusados por parecerem data ou estourarem o teto: ${rec.map(([k,n])=>`${DIAG_ROTULO[k]||k} (${n})`).join(', ')}</div>`:''}
+      ${(d.todas&&d.todas.length)?`<details class="mt-3"><summary class="text-[10px] font-semibold text-indigo-600 cursor-pointer">ver as ${d.todas.length} colunas desta aba</summary><div class="mt-1.5 flex flex-wrap gap-1">${d.todas.map(c=>`<code class="text-[9.5px] bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5">${c}</code>`).join('')}</div></details>`:''}
     </div>`;
   }).join('');
 }
