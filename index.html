@@ -452,11 +452,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
         <div class="mt-1"><span id="vnPaceDias" class="text-[21px] font-bold text-zinc-900 tabnum"></span></div></div>
       </div>
       <div id="vnPaceCards" class="grid md:grid-cols-3 gap-4 mt-6"></div>
-      <div class="flex items-center justify-between flex-wrap gap-3 mt-8">
-       <div class="text-[11px] font-bold uppercase tracking-wider text-zinc-600">Acumulado x curva da meta</div>
-       <div id="vnPaceTabs" class="flex gap-1.5"></div>
-      </div>
-      <div id="vnPaceChart" class="overflow-x-auto mt-4"></div>
+      <div id="vnPaceCharts" class="mt-9 flex flex-col gap-9"></div>
      </section>
 
      <section class="rounded-xl border bg-white px-7 py-7 mt-6">
@@ -470,13 +466,6 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
         <div class="mt-1"><span id="vnBest" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div></div>
       </div>
       <div id="vnChart" class="overflow-x-auto mt-6"></div>
-     </section>
-
-     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
-      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Ficha de interesse</span>
-      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Prioridade da aplicação</h2>
-      <p class="text-[13px] text-muted-foreground mt-1">Quanto cada resposta da ficha converteu em venda.</p>
-      <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPrio"></tbody></table></div>
      </section>
 
      <div class="grid lg:grid-cols-2 gap-6 mt-6">
@@ -494,13 +483,6 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
        <div class="overflow-x-auto mt-4"><table class="w-full text-[12px]"><tbody id="vnPag"></tbody></table></div>
       </section>
      </div>
-
-     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
-      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-users"/></svg>Time comercial</span>
-      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Faturamento por vendedor</h2>
-      <p id="vnConsSub" class="text-[13px] text-muted-foreground mt-1"></p>
-      <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnCons"></tbody></table></div>
-     </section>
 
      <section class="rounded-xl border bg-white px-7 py-7 mt-6">
       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Cruzamento com a base de leads</span>
@@ -524,12 +506,6 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
       </section>
      </div>
 
-     <section id="vnDiagBox" class="rounded-xl border bg-white px-7 py-7 mt-6" hidden>
-      <span class="inline-flex items-center gap-1.5 rounded-full border text-zinc-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Leitura das planilhas</span>
-      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">De onde cada número veio</h2>
-      <p class="text-[13px] text-muted-foreground mt-1">Qual coluna de cada aba foi usada para cada campo. Se algo essencial aparecer em vermelho, é só acrescentar o nome exato da coluna na lista <code>COL</code> do nó "Agregar números".</p>
-      <div id="vnDiag" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-5"></div>
-     </section>
     </div>
 
     <p id="note" class="text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed"></p>
@@ -1195,18 +1171,11 @@ function renderMeta(){
 //     contratado R$ total do contrato (TMB = valor nominal; demais = bruto)
 //   aplic: { cols:['cluster','canal','prio','completa','n'], rows:[...] }  // completa = 1|0
 //   leads_fecharam, sem_match, nominal_tmb
-const PRIOS = {
-  P1: 'Sim, já decidi e quero garantir minha vaga',
-  P2: 'Ainda não, estou com dúvidas',
-  P3: 'Quero mas não tenho condição',
-};
-const PRIO_COR = { P1:'#10b981', P2:'#6366f1', P3:'#fb8c45', '—':'#a1a1aa' };
 // ======== PACING CONTRA A META ========
-let paceAba = 'cash';
 const PACE_METRICAS = [
-  { k:'cash',   rot:'Cash collected',       cor:'#10b981', money:true  },
-  { k:'nom',    rot:'Faturamento nominal',  cor:'#f59e0b', money:true  },
-  { k:'aplic',  rot:'Aplicações',           cor:'#6366f1', money:false },
+  { k:'vendas', rot:'Vendas',       money:false },
+  { k:'cash',   rot:'Faturamento',  money:true  },
+  { k:'aplic',  rot:'Aplicações',   money:false },
 ];
 function renderPace(V, K, vs, apRows, AK){
   const F = META.funil, PV = META.periodo_vendas || {};
@@ -1214,112 +1183,110 @@ function renderPace(V, K, vs, apRows, AK){
   const leadsR  = F.leads_real || sum(rows,'l') || metaLeadsN;
   const showupR = F.showup_real || Math.floor(metaLeadsN * F.showup_pct);
 
-  // --- metas, derivadas do mesmo funil da aba Meta
-  const mAplic  = Math.round(showupR * F.aplic_pct);
+  // metas, derivadas do mesmo funil da aba Meta
   const mVendas = Math.round(leadsR * F.vendas_lead_pct);
   const vcM = Math.round(mVendas * F.cartao_pct), vbM = mVendas - vcM;
-  const mCash = vcM * F.ticket_cartao + vbM * F.ticket_boleto;
-  const mNom  = vcM * F.ticket_cartao + vbM * (F.ticket_nominal || F.ticket_boleto);
+  const mCash  = vcM * F.ticket_cartao + vbM * F.ticket_boleto;
+  const mNom   = vcM * F.ticket_cartao + vbM * (F.ticket_nominal || F.ticket_boleto);
+  const mAplic = Math.round(showupR * F.aplic_pct);
+  const METAS  = { vendas:mVendas, cash:mCash, aplic:mAplic };
 
-  // --- janela
+  // janela
   const diasV = [...new Set(vs.map(r=>r[K.dia]).filter(Boolean))].sort();
   const diasA = apRows.length ? [...new Set(apRows.map(r=>r[AK.dia]).filter(Boolean))].sort() : [];
   const ini = PV.inicio || [...diasV, ...diasA].sort()[0] || META.data_evento;
   const fim = (PV.fim && PV.fim >= ini) ? PV.fim : (diasV.at(-1) || ini);
-  const ag  = new Date(); const hojeISO = new Date(ag.getTime()-ag.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const ag = new Date(); const hojeISO = new Date(ag.getTime()-ag.getTimezoneOffset()*60000).toISOString().slice(0,10);
   const corte = hojeISO > fim ? fim : hojeISO < ini ? ini : hojeISO;
   const dd = (a,b) => Math.round((new Date(b) - new Date(a))/86400000);
   const totalDias = Math.max(1, dd(ini,fim) + 1);
   const decorridos = Math.max(1, dd(ini,corte) + 1);
   const restantes = Math.max(0, totalDias - decorridos);
-  const encerrado = hojeISO > fim;
+  const dias = []; for(let i=0;i<totalDias;i++){ const d=new Date(ini); d.setDate(d.getDate()+i); dias.push(d.toISOString().slice(0,10)); }
 
-  $('vnPaceDias').textContent = encerrado ? 'encerrado' : fmt(restantes);
-  $('vnPaceSub').innerHTML = `Janela de ${ddmm(ini)} a ${ddmm(fim)} · <b class="text-zinc-900">dia ${fmt(decorridos)} de ${fmt(totalDias)}</b>. Metas vindas do funil da aba Meta (${pct(F.vendas_lead_pct,1,1)} sobre ${fmt(leadsR)} leads = ${fmt(mVendas)} vendas).`;
-
-  // --- séries diárias
-  const todosDias = []; for(let i=0;i<totalDias;i++){ const d = new Date(ini); d.setDate(d.getDate()+i); todosDias.push(d.toISOString().slice(0,10)); }
+  // séries diárias
+  const temDataAplic = diasA.length > 0;
+  const totAplicComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
   const serie = {
-    cash:  todosDias.map(d=>vs.filter(r=>r[K.dia]===d).reduce((a,r)=>a+r[K.bruto],0)),
-    nom:   todosDias.map(d=>vs.filter(r=>r[K.dia]===d).reduce((a,r)=>a+r[K.contratado],0)),
-    aplic: todosDias.map(d=>apRows.filter(r=>r[AK.dia]===d && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0)),
+    vendas: dias.map(d=>vs.filter(r=>r[K.dia]===d).length),
+    cash:   dias.map(d=>vs.filter(r=>r[K.dia]===d).reduce((a,r)=>a+r[K.bruto],0)),
+    aplic:  temDataAplic
+      ? dias.map(d=>apRows.filter(r=>r[AK.dia]===d && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0))
+      // sem coluna de data na aba Aplicações: tudo cai no primeiro dia, para o total continuar certo
+      : dias.map((_,i)=> i===0 ? totAplicComp : 0),
   };
-  const METAS = { cash:mCash, nom:mNom, aplic:mAplic };
 
-  // --- cards
-  $('vnPaceCards').innerHTML = PACE_METRICAS.map(({k,rot,cor,money})=>{
+  $('vnPaceDias').textContent = hojeISO > fim ? 'encerrado' : fmt(restantes);
+  $('vnPaceSub').innerHTML = `Janela de ${ddmm(ini)} a ${ddmm(fim)} · <b class="text-zinc-900">dia ${fmt(decorridos)} de ${fmt(totalDias)}</b>. Metas vindas do funil da aba Meta: ${pct(F.vendas_lead_pct,1,1)} sobre ${fmt(leadsR)} leads.`;
+
+  // ---- cards
+  $('vnPaceCards').innerHTML = PACE_METRICAS.map(({k,rot,money})=>{
     const meta = METAS[k], feito = serie[k].reduce((a,b)=>a+b,0);
     const v = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
     const esperado = meta * decorridos / totalDias;
-    const ritmoAtual = feito / decorridos;
     const falta = Math.max(0, meta - feito);
     const precisa = restantes ? falta / restantes : falta;
-    const projecao = ritmoAtual * totalDias;
-    const noRitmo = feito >= esperado;
-    const bateu = feito >= meta;
-    const cls = bateu ? ['bg-emerald-50/60','border-emerald-200','text-emerald-700','meta batida']
-              : noRitmo ? ['bg-emerald-50/40','border-emerald-100','text-emerald-700','no ritmo']
-              : ['bg-red-50/40','border-red-100','text-red-600','atrasado'];
-    const p = pctN(feito, meta), pEsp = pctN(esperado, meta);
-    return `<div class="rounded-lg border ${cls[1]} ${cls[0]} p-5">
+    const projecao = feito / decorridos * totalDias;
+    const bateu = feito >= meta, noRitmo = feito >= esperado;
+    const c = bateu ? ['border-emerald-200 bg-emerald-50/60','text-emerald-700','meta batida']
+            : noRitmo ? ['border-emerald-100 bg-emerald-50/40','text-emerald-700','no ritmo']
+            : ['border-red-100 bg-red-50/40','text-red-600','atrasado'];
+    return `<div class="rounded-lg border ${c[0]} p-5">
       <div class="flex items-center justify-between gap-2">
         <div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">${rot}</div>
-        <span class="text-[9px] font-bold uppercase tracking-wider ${cls[2]}">${cls[3]}</span></div>
+        <span class="text-[9px] font-bold uppercase tracking-wider ${c[1]}">${c[2]}</span></div>
       <div class="text-[23px] font-bold text-zinc-900 mt-1.5 tabnum">${v(feito)}</div>
-      <div class="text-[10.5px] text-zinc-500">de ${v(meta)} · <b class="${cls[2]}">${pct(feito,meta,0)}</b></div>
-      <div class="relative h-2 rounded-full bg-white border mt-2.5 overflow-hidden">
-        <i class="block h-full rounded-full" style="width:${Math.min(100,p)}%;background:${cor}"></i>
-        <i class="absolute inset-y-0 w-[2px] bg-zinc-900" style="left:${Math.min(100,pEsp)}%" title="esperado para hoje: ${v(esperado)}"></i></div>
-      <div class="text-[9.5px] text-zinc-400 mt-1">a marca preta é onde deveríamos estar hoje</div>
+      <div class="text-[10.5px] text-zinc-500">de ${v(meta)} · <b class="${c[1]}">${pct(feito,meta,0)}</b>${k==='cash'?` · nominal ${brl(mNom)}`:''}</div>
       <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t">
         <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">Fazendo por dia</div>
-          <div class="text-[14px] font-bold text-zinc-900 tabnum">${v(ritmoAtual)}</div></div>
+          <div class="text-[14px] font-bold text-zinc-900 tabnum">${v(feito/decorridos)}</div></div>
         <div><div class="text-[8.5px] font-bold uppercase tracking-wider text-zinc-500">${restantes?'Precisa por dia':'Falta'}</div>
-          <div class="text-[14px] font-bold ${falta?cls[2]:'text-emerald-600'} tabnum">${falta?v(precisa):'–'}</div></div>
-      </div>
-      <div class="text-[10px] text-zinc-500 mt-2.5">${bateu ? `Já passou a meta em <b class="text-emerald-600">${v(feito-meta)}</b>.`
-        : restantes ? `Nesse ritmo fecha em <b class="text-zinc-800">${v(projecao)}</b> (${pct(projecao,meta,0)} da meta). Faltam <b class="text-zinc-800">${v(falta)}</b>.`
-        : `Fechou em ${pct(feito,meta,0)} da meta, <b class="text-red-600">${v(falta)}</b> abaixo.`}</div>
-    </div>`;
+          <div class="text-[14px] font-bold ${falta?c[1]:'text-emerald-600'} tabnum">${falta?v(precisa):'–'}</div></div></div>
+      <div class="text-[10px] text-zinc-500 mt-2.5">${bateu ? `Passou a meta em <b class="text-emerald-600">${v(feito-meta)}</b>.`
+        : restantes ? `Nesse ritmo fecha em <b class="text-zinc-800">${v(projecao)}</b>, ${pct(projecao,meta,0)} da meta.`
+        : `Fechou ${v(falta)} abaixo da meta.`}</div></div>`;
   }).join('');
 
-  // --- abas do gráfico
-  $('vnPaceTabs').innerHTML = PACE_METRICAS.map(({k,rot})=>
-    `<button data-p="${k}" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border ${paceAba===k?'bg-zinc-900 text-white border-zinc-900':'bg-white text-zinc-600 hover:bg-zinc-50'}">${rot}</button>`).join('');
-  $('vnPaceTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ paceAba=b.dataset.p; renderVen(); });
-
-  // --- gráfico acumulado x curva da meta
-  const M = PACE_METRICAS.find(x=>x.k===paceAba), meta = METAS[paceAba];
-  const v = M.money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
-  const kv = x => M.money ? (x>=1000 ? 'R$ '+(x/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(x)) : fmt(Math.round(x));
-  const acc = []; serie[paceAba].reduce((a,x,i)=>(acc[i]=a+x),0);
-  const n = todosDias.length, W = 1000, H = 280, top = 40, base = 232, padL = 0;
-  const x = i => n>1 ? padL + i*((W-padL)/(n-1)) : W/2;
-  const max = Math.max(meta, ...acc) * 1.06 || 1;
-  const y = val => base - (val/max)*(base-top);
-  const curva = todosDias.map((_,i)=> meta*(i+1)/n);
-  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px;font-family:Inter,sans-serif" role="img" aria-label="Acumulado contra a curva da meta">`;
-  g += `<line x1="0" x2="${W}" y1="${y(meta)}" y2="${y(meta)}" stroke="#d4d4d8" stroke-dasharray="4 4"/>`;
-  g += `<text x="${W}" y="${y(meta)-7}" text-anchor="end" font-size="10" font-weight="700" fill="#71717a">meta ${v(meta)}</text>`;
-  g += `<polyline fill="none" stroke="#a1a1aa" stroke-width="2" stroke-dasharray="5 4" points="${todosDias.map((_,i)=>`${x(i)},${y(curva[i])}`).join(' ')}"/>`;
-  // desenha até hoje, ou até o último dia que tem dado (linha dataada à frente aparece em vez de sumir)
-  let ultimoComDado = -1; serie[paceAba].forEach((x,i)=>{ if(x) ultimoComDado = i; });
-  const ate = Math.min(n-1, Math.max(0, dd(ini,corte), ultimoComDado));
-  const reais = todosDias.slice(0, ate+1);
-  if(reais.length>1){
-    g += `<polygon points="${x(0)},${base} ${reais.map((_,i)=>`${x(i)},${y(acc[i])}`).join(' ')} ${x(ate)},${base}" fill="${M.cor}" opacity=".12"/>`;
-    g += `<polyline fill="none" stroke="${M.cor}" stroke-width="3" stroke-linejoin="round" points="${reais.map((_,i)=>`${x(i)},${y(acc[i])}`).join(' ')}"/>`;
-  }
-  reais.forEach((d,i)=>{ const atras = acc[i] < curva[i];
-    g += `<circle cx="${x(i)}" cy="${y(acc[i])}" r="${i===ate?5:3.5}" fill="#fff" stroke="${M.cor}" stroke-width="${i===ate?3:2}"><title>${ddmm(d)} · acumulado ${v(acc[i])} · meta do dia ${v(curva[i])}${atras?' (atrás)':' (na frente)'}</title></circle>`; });
-  if(reais.length) g += `<text x="${x(ate)}" y="${y(acc[ate])-13}" text-anchor="${ate>n-3?'end':'middle'}" font-size="11" font-weight="700" fill="${M.cor}">${kv(acc[ate])}</text>`;
-  todosDias.forEach((d,i)=>{ if(n>14 && i%2 && i!==n-1) return;
-    g += `<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="9.5" font-weight="600" fill="${i===ate?'#f59e0b':'#a1a1aa'}">${dm(d)}</text>`; });
-  g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/>`;
-  g += `<rect x="0" y="10" width="9" height="9" rx="2" fill="${M.cor}"/><text x="14" y="18" font-size="9.5" font-weight="600" fill="#52525b">realizado</text>`;
-  g += `<line x1="86" x2="104" y1="15" y2="15" stroke="#a1a1aa" stroke-width="2" stroke-dasharray="5 4"/><text x="109" y="18" font-size="9.5" font-weight="600" fill="#52525b">curva da meta</text></svg>`;
-  $('vnPaceChart').innerHTML = g;
+  // ---- três gráficos no padrão do pacing da captação
+  $('vnPaceCharts').innerHTML = PACE_METRICAS.map(({k,rot,money})=>{
+    const meta = METAS[k], dL = serie[k];
+    const cum = []; dL.reduce((a,x,i)=>(cum[i]=a+x),0);
+    const metaCum = dias.map((_,i)=>meta*(i+1)/totalDias);
+    const v  = money ? (x=>brl(x)) : (x=>fmt(Math.round(x)));
+    const kv = money ? (x=> x>=1000 ? 'R$ '+(x/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(x)) : (x=>fmt(Math.round(x)));
+    const n = dias.length, W = 1000, H = 262, base = 230, top = 62, gap = 3;
+    const bw = (W - gap*(n-1))/n;
+    const max = Math.max(...cum, meta) || 1, y = val => base - (val/max)*(base-top);
+    const ultimo = Math.min(n-1, Math.max(0, dd(ini,corte)));
+    let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px;font-family:Inter,sans-serif" role="img" aria-label="Pacing de ${rot}">`;
+    dias.forEach((d,i)=>{
+      const x = i*(bw+gap), prev = i?cum[i-1]:0, cx = x+bw/2, futuro = i > ultimo;
+      g += `<rect x="${x}" y="${y(metaCum[i])}" width="${bw}" height="${base-y(metaCum[i])}" fill="#f9fafb"/>`;
+      if(!futuro){
+        g += `<rect x="${x}" y="${y(prev)}" width="${bw}" height="${base-y(prev)}" fill="#10b981"/>`;
+        g += `<rect x="${x}" y="${y(cum[i])}" width="${bw}" height="${Math.max(0,y(prev)-y(cum[i]))}" fill="#fb8c45"><title>${ddmm(d)}: +${v(dL[i])} · acumulado ${v(cum[i])} · meta do dia ${v(metaCum[i])}</title></rect>`;
+      }
+      const topV = y(Math.max(futuro?0:cum[i], metaCum[i]));
+      if(!futuro){
+        g += `<text x="${cx}" y="${topV-5}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3f3f46">${kv(cum[i])}</text>`;
+        if(dL[i]) g += `<text x="${cx}" y="${topV-18}" text-anchor="middle" font-size="9" font-weight="600" fill="#f97316">+${kv(dL[i])}</text>`;
+      }
+      g += `<text x="${cx}" y="${topV-(futuro?5:(dL[i]?30:18))}" text-anchor="middle" font-size="8.5" fill="#a1a1aa">meta ${kv(metaCum[i])}</text>`;
+      g += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="9" font-weight="600" fill="${i===ultimo?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+    });
+    g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
+    const feito = cum[ultimo] || 0, esp = metaCum[ultimo];
+    const atras = feito < esp;
+    return `<div>
+      <div class="flex items-end justify-between flex-wrap gap-2 border-b pb-2 mb-3">
+        <div class="text-[13px] font-bold text-zinc-900">${rot}</div>
+        <div class="text-[11px] ${atras?'text-red-600':'text-emerald-600'} font-semibold tabnum">${v(feito)} hoje · meta do dia ${v(esp)} · ${atras?`${v(esp-feito)} atrás`:`${v(feito-esp)} à frente`}</div>
+      </div>
+      ${(k==='aplic' && !temDataAplic) ? `<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-2 mb-3">A aba Aplicações não tem coluna de data, então o total de ${fmt(totAplicComp)} aparece todo no primeiro dia. Com a data, a curva se distribui.</p>`:''}
+      <div class="overflow-x-auto">${g}</div></div>`;
+  }).join('');
 }
+
 function renderVen(){
   const box = $('vnStats'), V = DATA.vendas;
   if(!V || !V.rows || !V.rows.length){
@@ -1328,11 +1295,11 @@ function renderVen(){
     ['vnCash','vnLiq','vnGer','vnConv'].forEach(i=>$(i).textContent='–');
     ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
     $('vnBest').textContent = '–'; $('vnChart').innerHTML = '';
-    $('vnPagBar').innerHTML = ''; renderDiag(V && V.diag);
+    $('vnPagBar').innerHTML = '';
     $('vnPaceCards').innerHTML = '<p class="col-span-full text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
-    $('vnPaceChart').innerHTML = ''; $('vnPaceTabs').innerHTML = '';
+    $('vnPaceCharts').innerHTML = '';
     $('vnPaceSub').textContent = ''; $('vnPaceDias').textContent = '–';
-    ['vnPrio','vnPag','vnCons','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML=`<tr><td class="py-4 text-[12px] text-muted-foreground">${i==='vnPrio'?'Aguardando a aba Aplicações.':'Aguardando as abas de transação.'}</td></tr>`);
+    ['vnPag','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML='<tr><td class="py-4 text-[12px] text-muted-foreground">Aguardando as abas de transação.</td></tr>');
     $('vnOrig').innerHTML = '<p class="text-[12px] text-muted-foreground">Aguardando as abas de transação.</p>';
     return;
   }
@@ -1399,38 +1366,39 @@ function renderVen(){
   $('vnChartSub').textContent = `${fmt(nv)} vendas e ${brl(cash)} em caixa entre ${ddmm(dias[0])} e ${ddmm(dias.at(-1))}.`;
   const PLAT = [['assiny','Assiny','#6366f1'],['hotmart','Hotmart','#8b5cf6'],['tmb','TMB','#f59e0b']];
   const presentes = PLAT.filter(([k])=>vs.some(r=>r[K.plat]===k));
-  // Duas faixas separadas: faturamento em cima, vendas embaixo. Sem rótulos colidindo.
-  const n = dias.length, W = 1000, gap = 6;
-  const H = 330, fTop = 34, fBase = 136, bTop = 182, bBase = 292;
-  const bw = (W - gap*(n-1))/n, maxN = Math.max(...dN,1), maxR = Math.max(...dR,1);
-  const yL = v => fBase - (v/maxR)*(fBase-fTop), yB = v => bBase - (v/maxN)*(bBase-bTop);
+  // Por dia, duas colunas lado a lado: quantidade de vendas e faturamento,
+  // ambas empilhadas pelas mesmas cores de plataforma.
+  const n = dias.length, W = 1000, H = 310, top = 58, base = 244;
+  const grupo = W / n, gi = Math.min(26, grupo*0.16), bw = Math.max(10, (grupo - gi - 18) / 2);
+  const maxN = Math.max(...dN,1), maxR = Math.max(...dR,1);
+  const hN = q => (q/maxN)*(base-top), hR = v => (v/maxR)*(base-top);
   const kbrl = v => v >= 1000 ? 'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k' : brl(v);
-  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:680px;font-family:Inter,sans-serif" role="img" aria-label="Faturamento e vendas por dia">`;
-  g += `<text x="0" y="16" font-size="9.5" font-weight="700" fill="#059669" letter-spacing=".06em">FATURAMENTO EM CAIXA</text>`;
-  // área + linha de faturamento
-  const pts = dias.map((_,i)=>`${i*(bw+gap)+bw/2},${yL(dR[i])}`).join(' ');
-  if(n>1){
-    g += `<polygon points="${bw/2},${fBase} ${pts} ${(n-1)*(bw+gap)+bw/2},${fBase}" fill="#10b981" opacity=".10"/>`;
-    g += `<polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round" points="${pts}"/>`;
-  }
-  dias.forEach((d,i)=>{ const cx = i*(bw+gap)+bw/2;
-    g += `<circle cx="${cx}" cy="${yL(dR[i])}" r="4" fill="#fff" stroke="#10b981" stroke-width="2.5"><title>${brl(dR[i])} em ${ddmm(d)}</title></circle>`;
-    g += `<text x="${cx}" y="${yL(dR[i])-11}" text-anchor="middle" font-size="11" font-weight="700" fill="#059669">${kbrl(dR[i])}</text>`; });
-  g += `<line x1="0" x2="${W}" y1="${fBase+.5}" y2="${fBase+.5}" stroke="#e4e4e7"/>`;
-  // faixa de vendas
-  g += `<text x="0" y="${bTop-22}" font-size="9.5" font-weight="700" fill="#4f46e5" letter-spacing=".06em">VENDAS POR PLATAFORMA</text>`;
-  let lx = 210;
-  for(const [,nome,cor] of presentes){ g += `<rect x="${lx}" y="${bTop-31}" width="9" height="9" rx="2" fill="${cor}"/><text x="${lx+13}" y="${bTop-23}" font-size="9.5" font-weight="600" fill="#52525b">${nome}</text>`; lx += 26 + nome.length*5.9; }
-  dias.forEach((d,i)=>{ const x = i*(bw+gap), cx = x+bw/2, rsD = vs.filter(r=>r[K.dia]===d);
-    let acc = 0;
-    for(const [k,nome,cor] of presentes){ const q = rsD.filter(r=>r[K.plat]===k).length; if(!q) continue;
-      const y0 = yB(acc), y1 = yB(acc+q);
-      g += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(0,y0-y1)}" fill="${cor}"><title>${ddmm(d)} · ${nome}: ${fmt(q)} vendas · ${brl(rsD.filter(r=>r[K.plat]===k).reduce((a,r)=>a+r[K.bruto],0))}</title></rect>`;
-      if(y0-y1 > 16) g += `<text x="${cx}" y="${(y0+y1)/2+4}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">${fmt(q)}</text>`;
-      acc += q; }
-    g += `<text x="${cx}" y="${yB(dN[i])-7}" text-anchor="middle" font-size="12" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
-    g += `<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" font-weight="600" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`; });
-  g += `<line x1="0" x2="${W}" y1="${bBase+.5}" y2="${bBase+.5}" stroke="#e4e4e7"/></svg>`;
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:700px;font-family:Inter,sans-serif" role="img" aria-label="Vendas e faturamento por plataforma, por dia">`;
+  let lx = 0;
+  for(const [,nome,cor] of presentes){ g += `<rect x="${lx}" y="10" width="9" height="9" rx="2" fill="${cor}"/><text x="${lx+13}" y="18" font-size="9.5" font-weight="600" fill="#52525b">${nome}</text>`; lx += 26 + nome.length*5.9; }
+  g += `<text x="${lx+6}" y="18" font-size="9.5" fill="#a1a1aa">coluna da esquerda = vendas · da direita = faturamento</text>`;
+  dias.forEach((d,i)=>{
+    const g0 = i*grupo + 9, xA = g0, xB = g0 + bw + gi, cxG = g0 + bw + gi/2;
+    const rsD = vs.filter(r=>r[K.dia]===d);
+    let accN = 0, accR = 0;
+    for(const [k,nome,cor] of presentes){
+      const rsP = rsD.filter(r=>r[K.plat]===k), q = rsP.length; if(!q) continue;
+      const val = rsP.reduce((a,r)=>a+r[K.bruto],0);
+      const yA = base - hN(accN) - hN(q), hA = hN(q);
+      g += `<rect x="${xA}" y="${yA}" width="${bw}" height="${hA}" fill="${cor}"><title>${ddmm(d)} · ${nome}: ${fmt(q)} vendas</title></rect>`;
+      if(hA > 15) g += `<text x="${xA+bw/2}" y="${yA+hA/2+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${fmt(q)}</text>`;
+      const yB = base - hR(accR) - hR(val), hB = hR(val);
+      g += `<rect x="${xB}" y="${yB}" width="${bw}" height="${hB}" fill="${cor}" opacity=".58"><title>${ddmm(d)} · ${nome}: ${brl(val)}</title></rect>`;
+      if(hB > 15) g += `<text x="${xB+bw/2}" y="${yB+hB/2+4}" text-anchor="middle" font-size="9" font-weight="700" fill="#27272a">${kbrl(val)}</text>`;
+      accN += q; accR += val;
+    }
+    g += `<text x="${xA+bw/2}" y="${base-hN(dN[i])-8}" text-anchor="middle" font-size="12" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
+    g += `<text x="${xA+bw/2}" y="${base-hN(dN[i])-21}" text-anchor="middle" font-size="8" font-weight="600" fill="#a1a1aa" letter-spacing=".05em">VENDAS</text>`;
+    g += `<text x="${xB+bw/2}" y="${base-hR(dR[i])-8}" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">${kbrl(dR[i])}</text>`;
+    g += `<text x="${xB+bw/2}" y="${base-hR(dR[i])-21}" text-anchor="middle" font-size="8" font-weight="600" fill="#a1a1aa" letter-spacing=".05em">FATURAMENTO</text>`;
+    g += `<text x="${cxG}" y="${H-10}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`;
+  });
+  g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
   $('vnChart').innerHTML = g;
 
   // ---- helpers de tabela
@@ -1438,25 +1406,6 @@ function renderVen(){
   const td = 'text-right py-2.5 px-3 border-b';
   const head = cs => `<tr>${cs.map((c,i)=>`<th class="${th} ${i?'':'!text-left'}">${c}</th>`).join('')}</tr>`;
   const barra = (v,m,cor) => `<span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden inline-block align-middle"><i class="block h-full" style="width:${m?Math.min(100,v/m*100):0}%;background:${cor}"></i></span>`;
-
-  // ---- prioridade da ficha
-  const apPorPrio = k => apRows.filter(r=>r[AK.prio]===k && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
-  let t = head(['Resposta','Aplicações','% das aplicações','Compradores','Conversão','Em caixa','Ticket']);
-  let somaAp = 0, somaV = 0, somaC = 0;
-  for(const k of ['P1','P2','P3','—']){
-    const rs = vs.filter(r=>r[K.prio]===k), ap = apPorPrio(k);
-    if(!rs.length && !ap) continue;
-    const c = S(rs,'bruto'); somaAp += ap; somaV += rs.length; somaC += c;
-    const cor = PRIO_COR[k]||'#a1a1aa';
-    t += `<tr><td class="${td} !text-left"><span class="inline-flex items-center gap-2"><i class="w-2 h-2 rounded-full shrink-0" style="background:${cor}"></i><span><b class="text-zinc-900">${k}</b><div class="text-[10px] text-zinc-500 leading-tight">${PRIOS[k]||'sem resposta registrada'}</div></span></span></td>
-      <td class="${td} text-zinc-600">${fmt(ap)}</td>
-      <td class="${td}">${apComp?`${barra(ap,apComp,cor)} <b class="ml-1.5">${pct(ap,apComp)}</b>`:'–'}</td>
-      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
-      <td class="${td} font-semibold">${ap?pct(rs.length,ap):'–'}</td>
-      <td class="${td} font-semibold text-emerald-600">${brl(c)}</td><td class="${td} text-zinc-600">${rs.length?brl(c/rs.length):'–'}</td></tr>`;
-  }
-  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(somaAp)}</td><td class="${td} font-bold">${apComp?pct(somaAp,apComp,0):'–'}</td><td class="${td} font-bold">${fmt(somaV)}</td><td class="${td} font-bold">${somaAp?pct(somaV,somaAp):'–'}</td><td class="${td} font-bold text-emerald-600">${brl(somaC)}</td><td class="${td} font-bold">${somaV?brl(somaC/somaV):'–'}</td></tr>`;
-  $('vnPrio').innerHTML = t;
 
   // ---- origem awsales x comercial (dois blocos)
   const rsAw  = vs.filter(r=>r[K.origem]==='awsales');
@@ -1494,24 +1443,6 @@ function renderVen(){
   t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold">100,0%</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold">100,0%</td><td class="${td} font-bold">${brl(cash/nv)}</td></tr>`;
   $('vnPag').innerHTML = t;
   $('vnPagBar').innerHTML = barra2;
-
-  // ---- consultores (dentro do comercial)
-  const cashCom = S(rsCom,'bruto');
-  const cons = {}; for(const r of rsCom){ (cons[r[K.consultor]] ||= []).push(r); }
-  const ordC = Object.keys(cons).sort((a,b)=>S(cons[b],'bruto')-S(cons[a],'bruto'));
-  const semNome = ordC.length===1 && ordC[0]==='—';
-  $('vnConsSub').textContent = semNome
-    ? 'A coluna de vendedor não foi encontrada nas abas de transação — veja o bloco "De onde cada número veio" no rodapé.'
-    : `Apenas as vendas do comercial (${fmt(rsCom.length)} de ${fmt(nv)}), ordenadas por faturamento em caixa.`;
-  const maxC = Math.max(...ordC.map(k=>S(cons[k],'bruto')),1);
-  t = head(['Vendedor','Vendas','Em caixa','Contratado','Ticket','Participação no comercial']);
-  for(const k of ordC){ const rs = cons[k], c = S(rs,'bruto');
-    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${k==='—'?'<span class="text-zinc-400 font-normal">sem vendedor na planilha</span>':k}</td>
-      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td><td class="${td} font-semibold text-emerald-600">${brl(c)}</td>
-      <td class="${td} text-amber-500 font-semibold">${brl(S(rs,'contratado'))}</td><td class="${td} text-zinc-600">${brl(c/rs.length)}</td>
-      <td class="${td}">${barra(c,maxC,'#10b981')} <b class="ml-1.5">${pct(c,cashCom,0)}</b></td></tr>`; }
-  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total comercial</td><td class="${td} font-bold">${fmt(rsCom.length)}</td><td class="${td} font-bold text-emerald-600">${brl(cashCom)}</td><td class="${td} font-bold text-amber-500">${brl(S(rsCom,'contratado'))}</td><td class="${td} font-bold">${rsCom.length?brl(cashCom/rsCom.length):'–'}</td><td class="${td}"></td></tr>`;
-  $('vnCons').innerHTML = t;
 
   // ---- cluster (cruzamento com a base de leads)
   const CL = [...SEGS, 'Sem match'];
@@ -1552,54 +1483,6 @@ function renderVen(){
       <td class="${td} ${ct-b>0?'text-amber-500 font-semibold':'text-zinc-400'}">${ct-b>0?brl(ct-b):'–'}</td></tr>`; }
   t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold text-red-500">− ${brl(taxas)}</td><td class="${td} font-bold">${brl(liq)}</td><td class="${td} font-bold text-amber-500">${brl(receber)}</td></tr>`;
   $('vnPlat').innerHTML = t;
-
-  // ---- diagnóstico de colunas
-  renderDiag(V.diag);
-}
-const DIAG_ESSENCIAIS = {
-  'Aplicações':   ['email','prio'],
-  'Base Assiny':  ['email','status','valor','taxa'],
-  'Base Hotmart': ['email','status','valor','recebido'],
-  'Base TMB':     ['email','parcela','pedido','entrada','ticket'],
-  _default: ['email'] };
-const DIAG_ROTULO = { email:'E-mail', telefone:'Telefone', data:'Data', status:'Status',
-  valor:'Valor R$', recebido:'Valor Recebido R$', taxa:'Taxa (÷100)', parcela:'Parcela',
-  pedido:'Pedido', entrada:'Entrada', ticket:'Ticket (nominal)', pagto:'Forma de pagamento',
-  vendedor:'Vendedor', utm:'utm_source', prio:'Prioridade', completa:'Completa' };
-function renderDiag(diag){
-  const box = $('vnDiagBox'); if(!diag || !Object.keys(diag).length){ box.hidden = true; return; }
-  box.hidden = false;
-  $('vnDiag').innerHTML = Object.entries(diag).map(([tab,d])=>{
-    const ess = DIAG_ESSENCIAIS[tab] || DIAG_ESSENCIAIS._default;
-    const faltando = ess.filter(k=>!d.colunas[k]);
-    const rec = Object.entries(d.recusados||{});
-    const vistos = Object.entries(d.status_vistos||{}).sort((a,b)=>b[1]-a[1]);
-    const filtros = [];
-    if(d.fora_status)  filtros.push(`${fmt(d.fora_status)} fora do status`);
-    if(d.fora_parcela) filtros.push(`${fmt(d.fora_parcela)} parcela ≠ 0`);
-    if(d.duplicados)   filtros.push(`${fmt(d.duplicados)} pedido duplicado`);
-    if(d.fora_data)    filtros.push(`${fmt(d.fora_data)} antes da campanha`);
-    if(d.sem_comprador)filtros.push(`${fmt(d.sem_comprador)} sem comprador (linha de total)`);
-    return `<div class="rounded-lg border ${faltando.length?'border-red-200 bg-red-50/40':'border-zinc-200'} p-4">
-      <div class="flex items-center justify-between gap-2">
-        <b class="text-[12px] text-zinc-900">${tab}</b>
-        <span class="text-[10px] ${faltando.length?'text-red-600 font-bold':'text-zinc-500'}">${faltando.length?'falta coluna':'ok'}</span></div>
-      <div class="text-[10px] text-zinc-500 mt-0.5">${fmt(d.linhas)} linhas${d.validas!=null?` · <b class="text-zinc-700">${fmt(d.validas)} válidas</b>`:''}</div>
-      ${filtros.length?`<div class="mt-2 flex flex-wrap gap-1">${filtros.map(f=>`<span class="text-[9.5px] bg-zinc-100 text-zinc-600 rounded px-1.5 py-0.5">${f}</span>`).join('')}</div>`:''}
-      ${d.taxa_media_pct!=null?`<div class="mt-2 text-[10px] ${(d.taxa_media_pct>0.2&&d.taxa_media_pct<20)?'text-zinc-600':'text-amber-700 font-semibold'}">Taxa média: ${String(d.taxa_media_pct).replace('.',',')}% do bruto${(d.taxa_media_pct>0.2&&d.taxa_media_pct<20)?'':' — confira contra o painel da plataforma'}</div>`:''}
-      ${d.total_planilha?`<div class="mt-2 rounded px-2 py-1.5 text-[10px] border ${d.bate?'bg-emerald-50 border-emerald-100 text-emerald-800':'bg-red-50 border-red-100 text-red-700'}">
-        <b>${d.bate?'Confere com o total da aba':'NÃO bate com o total da aba'}</b><br>
-        planilha ${brl(d.total_planilha,2)} · somado ${brl(d.somado||0,2)}${d.bate?'':` · diferença ${brl(d.diferenca||0,2)}`}</div>`:''}
-      ${vistos.length?`<details class="mt-2"><summary class="text-[10px] font-semibold text-indigo-600 cursor-pointer">status encontrados na aba</summary><div class="mt-1 flex flex-wrap gap-1">${vistos.map(([k,n])=>`<span class="text-[9.5px] bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5">${k}: ${fmt(n)}</span>`).join('')}</div></details>`:''}
-      <div class="mt-3 flex flex-col gap-1">${Object.entries(d.colunas).map(([k,c])=>{
-        const crit = ess.includes(k);
-        if(!c && !crit) return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="text-zinc-400">${DIAG_ROTULO[k]||k}</span><span class="text-zinc-300">—</span></div>`;
-        return `<div class="flex justify-between gap-2 text-[10.5px]"><span class="${crit?'font-semibold text-zinc-700':'text-zinc-500'}">${DIAG_ROTULO[k]||k}</span><span class="${c?'text-zinc-900 font-medium text-right':'text-red-600 font-bold'}">${c||'não encontrada'}</span></div>`;
-      }).join('')}</div>
-      ${rec.length?`<div class="mt-3 text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1.5">Valores recusados por parecerem data ou estourarem o teto: ${rec.map(([k,n])=>`${DIAG_ROTULO[k]||k} (${n})`).join(', ')}</div>`:''}
-      ${(d.todas&&d.todas.length)?`<details class="mt-3"><summary class="text-[10px] font-semibold text-indigo-600 cursor-pointer">ver as ${d.todas.length} colunas desta aba</summary><div class="mt-1.5 flex flex-wrap gap-1">${d.todas.map(c=>`<code class="text-[9.5px] bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5">${c}</code>`).join('')}</div></details>`:''}
-    </div>`;
-  }).join('');
 }
 function bindCanal(id){
   $(id).querySelectorAll('[data-c]').forEach(tr=>{
