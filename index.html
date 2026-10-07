@@ -59,6 +59,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
    <a data-v="composicao" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#composicao"><svg class="ico"><use href="#i-layers"/></svg>Composição da Base</a>
    <a data-v="disparos" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#disparos"><svg class="ico"><use href="#i-send"/></svg>Disparos</a>
    <a data-v="meta" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#meta"><svg class="ico"><use href="#i-target"/></svg>Meta</a>
+   <a data-v="vendas" class="flex items-center gap-2.5 px-2 py-2 rounded-md" href="#vendas"><svg class="ico"><use href="#i-dollar"/></svg>Vendas</a>
   </nav>
  </aside>
 
@@ -413,6 +414,90 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
     </section>
     </div>
 
+    <div id="v-vendas" hidden>
+     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-emerald-700"><svg class="ico ico-sm"><use href="#i-dollar"/></svg>Cash collected</div>
+       <div id="vnCash" class="text-[26px] font-bold text-emerald-600 mt-2 tabnum"></div>
+       <div id="vnCashSub" class="text-[9.5px] text-emerald-700/80 mt-1 leading-relaxed"></div>
+      </div>
+      <div class="rounded-lg border bg-white p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-indigo-600"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Faturamento líquido</div>
+       <div id="vnLiq" class="text-[26px] font-bold text-zinc-900 mt-2 tabnum"></div>
+       <div id="vnLiqSub" class="text-[9.5px] text-muted-foreground mt-1 leading-relaxed"></div>
+      </div>
+      <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700"><svg class="ico ico-sm"><use href="#i-target"/></svg>Faturamento geral</div>
+       <div id="vnGer" class="text-[26px] font-bold text-amber-600 mt-2 tabnum"></div>
+       <div id="vnGerSub" class="text-[9.5px] text-amber-700/80 mt-1 leading-relaxed"></div>
+      </div>
+      <div class="rounded-lg border bg-white p-4 min-h-[130px]">
+       <div class="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider text-blue-600"><svg class="ico ico-sm"><use href="#i-activity"/></svg>Conversão</div>
+       <div id="vnConv" class="text-[26px] font-bold text-zinc-900 mt-2 tabnum"></div>
+       <div id="vnConvSub" class="text-[9.5px] text-muted-foreground mt-1 leading-relaxed"></div>
+      </div>
+     </div>
+
+     <div id="vnStats" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4"></div>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+       <div>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-chart"/></svg>Linha do tempo</span>
+        <h2 class="text-[26px] font-bold tracking-tight text-zinc-900 mt-3">Vendas e faturamento por dia</h2>
+        <p id="vnChartSub" class="text-[13px] text-muted-foreground mt-1"></p>
+       </div>
+       <div class="text-right pt-6"><div class="text-[9.5px] font-bold uppercase tracking-wider text-zinc-600">Melhor dia</div>
+        <div class="mt-1"><span id="vnBest" class="text-[21px] font-bold text-emerald-600 tabnum"></span></div></div>
+      </div>
+      <div id="vnChart" class="overflow-x-auto mt-6"></div>
+     </section>
+
+     <div class="grid lg:grid-cols-2 gap-6 mt-6">
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-file"/></svg>Ficha de interesse</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Prioridade da aplicação</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Quanto cada resposta da ficha converteu em venda.</p>
+       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPrio"></tbody></table></div>
+      </section>
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-send"/></svg>Origem da venda</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">AwSales x Comercial</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Venda atribuída ao disparo contra venda trabalhada pelo time.</p>
+       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnOrig"></tbody></table></div>
+      </section>
+     </div>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-users"/></svg>Time comercial</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Vendas por consultor</h2>
+      <p class="text-[13px] text-muted-foreground mt-1">Ordenado por faturamento em caixa.</p>
+      <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnCons"></tbody></table></div>
+     </section>
+
+     <section class="rounded-xl border bg-white px-7 py-7 mt-6">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-grad"/></svg>Cruzamento com a base de leads</span>
+      <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Conversão por cluster</h2>
+      <p id="vnClusSub" class="text-[13px] text-muted-foreground mt-1"></p>
+      <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnClus"></tbody></table></div>
+     </section>
+
+     <div class="grid lg:grid-cols-2 gap-6 mt-6">
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-magnet"/></svg>utm_source da inscrição</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Conversão por canal</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Por onde o lead que comprou entrou na captação.</p>
+       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnCanal"></tbody></table></div>
+      </section>
+      <section class="rounded-xl border bg-white px-7 py-7">
+       <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5"><svg class="ico ico-sm"><use href="#i-cart"/></svg>Checkout</span>
+       <h2 class="text-[22px] font-bold tracking-tight text-zinc-900 mt-3">Por plataforma</h2>
+       <p class="text-[13px] text-muted-foreground mt-1">Bruto, taxas e o que ainda falta receber.</p>
+       <div class="overflow-x-auto mt-5"><table class="w-full text-[12px]"><tbody id="vnPlat"></tbody></table></div>
+      </section>
+     </div>
+    </div>
+
     <p id="note" class="text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed"></p>
    </div>
   </main>
@@ -584,14 +669,15 @@ const VIEWS = {
   captacao:{t:'Análise de Captação', s:'Visão consolidada de leads, alunos, score da pesquisa e grupos da SendFlow (planilha de debriefing).'},
   composicao:{t:'Composição da Base', s:'Quanto da captação é público novo, quanto veio de outras captações e quantos já compraram o FDS.'},
   disparos:{t:'Análise de Disparos', s:'Resultado de cada disparo da AwSales: leads, taxa de conversão e custo por lead.'},
-  meta:{t:'Meta da Campanha', s:'Projeção pelas campanhas anteriores e pelo funil comercial, com o realizado desta captação.'}
+  meta:{t:'Meta da Campanha', s:'Projeção pelas campanhas anteriores e pelo funil comercial, com o realizado desta captação.'},
+  vendas:{t:'Relatório de Vendas', s:'Faturamento das três plataformas, aplicações e conversão cruzada com a base de leads.'}
 };
 let view = 'captacao';
 function route(){
   view = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'captacao';
   for(const v in VIEWS) $('v-'+v).hidden = v!==view;
   $('vTitle').textContent = VIEWS[view].t; $('vSub').textContent = VIEWS[view].s;
-  $('filters').style.visibility = (view==='meta'||view==='disparos') ? 'hidden' : '';
+  $('filters').style.visibility = (view==='meta'||view==='disparos'||view==='vendas') ? 'hidden' : '';
   document.querySelectorAll('#nav a').forEach(a=>{ const on=a.dataset.v===view;
     a.className='flex items-center gap-2.5 px-2 py-2 rounded-md '+(on?'bg-accent text-zinc-900 font-medium':'hover:bg-accent'); });
   render();
@@ -618,7 +704,7 @@ function filtered(skipCanal){
 }
 
 function render(){
-  if(!rows){ $('note').className='text-[12px] text-zinc-500 mt-8'; $('note').textContent='Carregando os dados da planilha… isso leva alguns segundos.'; return; } if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); if(view==='disparos') renderDisp(); }
+  if(!rows){ $('note').className='text-[12px] text-zinc-500 mt-8'; $('note').textContent='Carregando os dados da planilha… isso leva alguns segundos.'; return; } if(view==='captacao') renderCap(); if(view==='composicao') renderComp(); if(view==='meta') renderMeta(); if(view==='disparos') renderDisp(); if(view==='vendas') renderVen(); }
 function renderCap(){
   const rs = filtered(false), L = sum(rs,'l');
   const na = sum(rs.filter(r=>r[C.seg]==='Não aluno'),'l'), al = L-na, gr = sum(rs,'g');
@@ -1054,6 +1140,186 @@ function renderMeta(){
   $('mtFunFin').innerHTML = box('Faturamento cartão', brl(fcR), `com a meta de leads ${brl(fc)}`, 'text-zinc-900') + box('Faturamento boleto', brl(fbR), `com a meta de leads ${brl(fb)}`, 'text-zinc-900') + box('Faturamento geral', brl(fgR), `${pct(fgR,fg,0)} do cenário com a meta batida`, 'text-amber-500') + box(`Margem (${pct(F.margem_pct,1,0)})`, brl(mgR), `com a meta de leads ${brl(mg)}`, 'text-emerald-600');
 }
 
+// ======== ABA VENDAS ========
+// Contrato esperado do n8n em DATA.vendas:
+//   cols: ['dia','plat','origem','consultor','cluster','canal','prio','pagto','bruto','liq','contratado']
+//   rows: uma linha por TRANSAÇÃO PAGA (sem nome/e-mail/telefone)
+//     dia        ISO 'aaaa-mm-dd'
+//     plat       'assiny' | 'hotmart' | 'tmb'
+//     origem     'awsales' | 'comercial' | 'outro'
+//     consultor  nome, ou '—' quando não houver
+//     cluster    'Aluno 7d'|'Aluno 14d'|'Aluno 30d'|'Aluno antigo'|'Não aluno'|'Sem match'
+//     canal      utm_source da INSCRIÇÃO do lead (cruzado pela base de leads)
+//     prio       'P1' | 'P2' | 'P3' | '—'
+//     pagto      'cartao' | 'boleto' | 'pix' | '—'
+//     bruto      R$ já em caixa nesta transação (para TMB = a entrada)
+//     liq        R$ bruto menos as taxas da plataforma
+//     contratado R$ total do contrato (TMB = valor nominal; demais = bruto)
+//   aplic: { cols:['cluster','canal','prio','completa','n'], rows:[...] }  // completa = 1|0
+//   leads_fecharam, sem_match, nominal_tmb
+const PRIOS = {
+  P1: 'Sim, já decidi e quero garantir minha vaga',
+  P2: 'Ainda não, estou com dúvidas',
+  P3: 'Quero mas não tenho condição',
+};
+const PRIO_COR = { P1:'#10b981', P2:'#6366f1', P3:'#fb8c45', '—':'#a1a1aa' };
+function renderVen(){
+  const box = $('vnStats'), V = DATA.vendas;
+  if(!V || !V.rows || !V.rows.length){
+    const aviso = `<div class="col-span-full rounded-lg border border-dashed p-5 text-[12px] text-muted-foreground">Sem dados de vendas. Adicione no n8n os nós <b>Base Assiny</b>, <b>Base Hotmart</b>, <b>Base TMB</b> e <b>Aplicações</b>, e publique o bloco <code>vendas</code> na resposta do webhook.</div>`;
+    box.innerHTML = aviso;
+    ['vnCash','vnLiq','vnGer','vnConv'].forEach(i=>$(i).textContent='–');
+    ['vnCashSub','vnLiqSub','vnGerSub','vnConvSub','vnChartSub','vnClusSub'].forEach(i=>$(i).textContent='');
+    $('vnBest').textContent = '–'; $('vnChart').innerHTML = '';
+    ['vnPrio','vnOrig','vnCons','vnClus','vnCanal','vnPlat'].forEach(i=>$(i).innerHTML=`<tr><td class="py-4 text-[12px] text-muted-foreground">${i==='vnPrio'?'Aguardando a aba Aplicações.':'Aguardando as abas de transação.'}</td></tr>`);
+    return;
+  }
+  const K = {}; V.cols.forEach((c,i)=>K[c]=i);
+  const vs = V.rows, L = sum(rows,'l');
+  const S  = (rs,k) => rs.reduce((a,r)=>a+(+r[K[k]]||0),0);
+  const by = (rs,k) => { const m={}; for(const r of rs){ (m[r[K[k]]] ||= []).push(r); } return m; };
+
+  const cash = S(vs,'bruto'), liq = S(vs,'liq'), ger = S(vs,'contratado');
+  const taxas = cash - liq, receber = ger - cash, nv = vs.length;
+  const fecharam = V.leads_fecharam ?? nv;
+
+  // ---- aplicações
+  const A = V.aplic, AK = {}; let apTot=0, apComp=0, apRows=[];
+  if(A && A.rows){ A.cols.forEach((c,i)=>AK[c]=i); apRows = A.rows;
+    apTot  = apRows.reduce((a,r)=>a+(+r[AK.n]||0),0);
+    apComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0); }
+  const apInc = apTot - apComp;
+
+  // ---- cards
+  const porPlat = by(vs,'plat');
+  const nomePlat = { assiny:'Assiny', hotmart:'Hotmart', tmb:'TMB' };
+  $('vnCash').textContent = brl(cash);
+  $('vnCashSub').innerHTML = ['assiny','hotmart','tmb'].filter(p=>porPlat[p])
+    .map(p=>`${nomePlat[p]} ${brl(S(porPlat[p],'bruto'))}`).join(' · ') || '—';
+  $('vnLiq').textContent = brl(liq);
+  $('vnLiqSub').textContent = `${brl(taxas)} em taxas (${pct(taxas,cash)} do bruto)`;
+  $('vnGer').textContent = brl(ger);
+  $('vnGerSub').textContent = receber > 0 ? `${brl(receber)} ainda a receber (boleto e saldo TMB)` : 'tudo já em caixa';
+  $('vnConv').textContent = pct(fecharam,L,2);
+  $('vnConvSub').textContent = `${fmt(fecharam)} leads fecharam · ${fmt(nv)} transaç${nv===1?'ão':'ões'} em ${fmt(L)} leads`;
+
+  const stat = (lbl,val,sub,cls='text-zinc-900') => `<div class="rounded-lg border bg-white p-4">
+    <div class="text-[9px] font-bold uppercase tracking-wider text-zinc-600">${lbl}</div>
+    <div class="text-[22px] font-bold ${cls} mt-1 tabnum">${val}</div>
+    <div class="text-[9.5px] text-muted-foreground mt-1">${sub}</div></div>`;
+  box.innerHTML =
+      stat('Aplicações completas', fmt(apComp), apTot ? `${fmt(apTot)} no total · ${fmt(apInc)} incompletas` : 'aguardando a aba Aplicações')
+    + stat('Aplicação → venda', apComp ? pct(fecharam,apComp) : '–', apComp ? `${fmt(fecharam)} de ${fmt(apComp)} fichas completas` : '—', 'text-emerald-600')
+    + stat('Ticket médio contratado', brl(nv?ger/nv:0), `${brl(nv?cash/nv:0)} em caixa por venda`, 'text-amber-500')
+    + stat('Vendas sem match na base', fmt(V.sem_match||0), (V.sem_match||0) ? 'compradores que não achamos na captação' : 'todas as vendas casaram com um lead');
+
+  // ---- gráfico: barras de vendas + linha de faturamento
+  const dias = [...new Set(vs.map(r=>r[K.dia]))].sort();
+  const dN = dias.map(d=>vs.filter(r=>r[K.dia]===d).length);
+  const dR = dias.map(d=>S(vs.filter(r=>r[K.dia]===d),'bruto'));
+  const iBest = dR.indexOf(Math.max(...dR));
+  $('vnBest').textContent = dias.length ? `${dm(dias[iBest])} · ${brl(dR[iBest])}` : '–';
+  $('vnChartSub').textContent = `${fmt(nv)} vendas e ${brl(cash)} em caixa entre ${ddmm(dias[0])} e ${ddmm(dias.at(-1))}.`;
+  const n = dias.length, W = 1000, H = 268, base = 224, top = 54, gap = 3;
+  const bw = (W - gap*(n-1))/n, maxN = Math.max(...dN,1), maxR = Math.max(...dR,1);
+  const yB = v => base - (v/maxN)*(base-top), yL = v => base - (v/maxR)*(base-top);
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px;font-family:Inter,sans-serif" role="img" aria-label="Vendas e faturamento por dia">`;
+  dias.forEach((d,i)=>{ const x = i*(bw+gap), cx = x+bw/2;
+    g += `<rect x="${x}" y="${yB(dN[i])}" width="${bw}" height="${base-yB(dN[i])}" rx="2" fill="#6366f1" opacity=".85"><title>${fmt(dN[i])} vendas em ${ddmm(d)} · ${brl(dR[i])}</title></rect>`;
+    g += `<text x="${cx}" y="${yB(dN[i])-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3f3f46">${fmt(dN[i])}</text>`;
+    g += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="9" font-weight="600" fill="${i===n-1?'#f59e0b':'#3f3f46'}">${dm(d)}</text>`; });
+  if(n>1) g += `<polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round" points="${dias.map((_,i)=>`${i*(bw+gap)+bw/2},${yL(dR[i])}`).join(' ')}"/>`;
+  dias.forEach((d,i)=>{ const cx = i*(bw+gap)+bw/2;
+    g += `<circle cx="${cx}" cy="${yL(dR[i])}" r="3.5" fill="#fff" stroke="#10b981" stroke-width="2"><title>${brl(dR[i])} em ${ddmm(d)}</title></circle>`;
+    g += `<text x="${cx}" y="${yL(dR[i])-10}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#059669">${(dR[i]/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})}k</text>`; });
+  g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/>`;
+  g += `<rect x="0" y="12" width="9" height="9" rx="2" fill="#6366f1"/><text x="14" y="20" font-size="9.5" font-weight="600" fill="#52525b">vendas</text>`;
+  g += `<line x1="72" x2="88" y1="17" y2="17" stroke="#10b981" stroke-width="2.5"/><text x="93" y="20" font-size="9.5" font-weight="600" fill="#52525b">faturamento em caixa</text></svg>`;
+  $('vnChart').innerHTML = g;
+
+  // ---- helpers de tabela
+  const th = 'text-right text-[9px] font-bold uppercase tracking-wider text-zinc-500 py-2.5 px-3 border-b';
+  const td = 'text-right py-2.5 px-3 border-b';
+  const head = cs => `<tr>${cs.map((c,i)=>`<th class="${th} ${i?'':'!text-left'}">${c}</th>`).join('')}</tr>`;
+  const barra = (v,m,cor) => `<span class="w-[70px] h-1.5 rounded-full bg-zinc-100 overflow-hidden inline-block align-middle"><i class="block h-full" style="width:${m?Math.min(100,v/m*100):0}%;background:${cor}"></i></span>`;
+
+  // ---- prioridade da ficha
+  const apPorPrio = k => apRows.filter(r=>r[AK.prio]===k && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
+  let t = head(['Resposta','Aplicações','Vendas','Conversão','Em caixa','Ticket']);
+  for(const k of ['P1','P2','P3','—']){
+    const rs = vs.filter(r=>r[K.prio]===k), ap = apPorPrio(k);
+    if(!rs.length && !ap) continue;
+    const c = S(rs,'bruto');
+    t += `<tr><td class="${td} !text-left"><span class="inline-flex items-center gap-2"><i class="w-2 h-2 rounded-full shrink-0" style="background:${PRIO_COR[k]||'#a1a1aa'}"></i><span><b class="text-zinc-900">${k}</b><div class="text-[10px] text-zinc-500 leading-tight">${PRIOS[k]||'sem resposta registrada'}</div></span></span></td>
+      <td class="${td} text-zinc-600">${fmt(ap)}</td><td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td}">${ap?`${barra(rs.length,ap,PRIO_COR[k]||'#a1a1aa')} <b class="ml-1.5">${pct(rs.length,ap)}</b>`:'–'}</td>
+      <td class="${td} font-semibold text-emerald-600">${brl(c)}</td><td class="${td} text-zinc-600">${rs.length?brl(c/rs.length):'–'}</td></tr>`;
+  }
+  $('vnPrio').innerHTML = t;
+
+  // ---- origem awsales x comercial
+  const orig = by(vs,'origem'), ordO = Object.keys(orig).sort((a,b)=>S(orig[b],'bruto')-S(orig[a],'bruto'));
+  const nomeO = { awsales:'AwSales (disparo)', comercial:'Comercial (time)' };
+  t = head(['Origem','Vendas','Em caixa','% do caixa','Ticket']);
+  for(const o of ordO){ const rs = orig[o], c = S(rs,'bruto');
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${nomeO[o]||o}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td><td class="${td} font-semibold text-emerald-600">${brl(c)}</td>
+      <td class="${td}">${barra(c,cash,'#6366f1')} <b class="ml-1.5">${pct(c,cash,0)}</b></td>
+      <td class="${td} text-zinc-600">${brl(c/rs.length)}</td></tr>`; }
+  $('vnOrig').innerHTML = t;
+
+  // ---- consultores
+  const cons = by(vs,'consultor'), ordC = Object.keys(cons).sort((a,b)=>S(cons[b],'bruto')-S(cons[a],'bruto'));
+  const maxC = Math.max(...ordC.map(k=>S(cons[k],'bruto')),1);
+  t = head(['Consultor','Vendas','Em caixa','Contratado','Ticket','Participação']);
+  for(const k of ordC){ const rs = cons[k], c = S(rs,'bruto');
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${k}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td><td class="${td} font-semibold text-emerald-600">${brl(c)}</td>
+      <td class="${td} text-amber-500 font-semibold">${brl(S(rs,'contratado'))}</td><td class="${td} text-zinc-600">${brl(c/rs.length)}</td>
+      <td class="${td}">${barra(c,maxC,'#10b981')} <b class="ml-1.5">${pct(c,cash,0)}</b></td></tr>`; }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold text-amber-500">${brl(ger)}</td><td class="${td} font-bold">${brl(cash/nv)}</td><td class="${td}"></td></tr>`;
+  $('vnCons').innerHTML = t;
+
+  // ---- cluster (cruzamento com a base de leads)
+  const CL = [...SEGS, 'Sem match'];
+  const apPorClus = k => apRows.filter(r=>r[AK.cluster]===k && +r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0);
+  $('vnClusSub').textContent = `Leads vêm da captação; vendas e aplicações são casadas por e-mail e telefone.${V.sem_match?` ${fmt(V.sem_match)} venda${V.sem_match>1?'s':''} sem par na base.`:''}`;
+  t = head(['Cluster','Leads','Aplicações','Vendas','Lead → venda','Aplic. → venda','Em caixa','Ticket']);
+  for(const k of CL){
+    const rs = vs.filter(r=>r[K.cluster]===k), lds = k==='Sem match' ? 0 : sum(rows.filter(r=>r[C.seg]===k),'l'), ap = apPorClus(k);
+    if(!rs.length && !lds && !ap) continue;
+    const c = S(rs,'bruto'), cv = lds ? rs.length/lds*100 : null;
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${k==='Sem match'?'':badge(k)}${k}</span></td>
+      <td class="${td} text-zinc-600">${lds?fmt(lds):'–'}</td><td class="${td} text-zinc-600">${fmt(ap)}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td}">${cv===null?'–':`${barra(cv,10,'#6366f1')} <b class="ml-1.5">${pct(rs.length,lds,2)}</b>`}</td>
+      <td class="${td} ${ap?'font-semibold':''}">${ap?pct(rs.length,ap):'–'}</td>
+      <td class="${td} font-semibold text-emerald-600">${brl(c)}</td><td class="${td} text-zinc-600">${rs.length?brl(c/rs.length):'–'}</td></tr>`;
+  }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(L)}</td><td class="${td} font-bold">${fmt(apComp)}</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold">${pct(fecharam,L,2)}</td><td class="${td} font-bold">${apComp?pct(fecharam,apComp):'–'}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold">${brl(cash/nv)}</td></tr>`;
+  $('vnClus').innerHTML = t;
+
+  // ---- canal de inscrição
+  const can = by(vs,'canal'), ordCa = Object.keys(can).sort((a,b)=>can[b].length-can[a].length);
+  t = head(['Canal','Leads','Vendas','Conversão','Em caixa']);
+  for(const k of ordCa){ const rs = can[k], lds = sum(rows.filter(r=>r[C.canal]===k),'l');
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900"><span class="inline-flex items-center gap-2">${logo(k)}${k}</span></td>
+      <td class="${td} text-zinc-600">${lds?fmt(lds):'–'}</td><td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td>
+      <td class="${td} font-semibold ${lds?'':'text-zinc-400'}">${lds?pct(rs.length,lds,2):'–'}</td>
+      <td class="${td} font-semibold text-emerald-600">${brl(S(rs,'bruto'))}</td></tr>`; }
+  $('vnCanal').innerHTML = t;
+
+  // ---- plataforma
+  t = head(['Plataforma','Vendas','Bruto','Taxas','Líquido','A receber']);
+  for(const p of ['assiny','hotmart','tmb']){ const rs = porPlat[p]; if(!rs) continue;
+    const b = S(rs,'bruto'), l = S(rs,'liq'), ct = S(rs,'contratado');
+    t += `<tr><td class="${td} !text-left font-semibold text-zinc-900">${nomePlat[p]}</td>
+      <td class="${td} font-bold text-zinc-900">${fmt(rs.length)}</td><td class="${td} font-semibold text-emerald-600">${brl(b)}</td>
+      <td class="${td} text-red-500">− ${brl(b-l)}</td><td class="${td} font-semibold text-zinc-900">${brl(l)}</td>
+      <td class="${td} ${ct-b>0?'text-amber-500 font-semibold':'text-zinc-400'}">${ct-b>0?brl(ct-b):'–'}</td></tr>`; }
+  t += `<tr class="bg-zinc-50"><td class="${td} !text-left font-bold text-zinc-900">Total</td><td class="${td} font-bold">${fmt(nv)}</td><td class="${td} font-bold text-emerald-600">${brl(cash)}</td><td class="${td} font-bold text-red-500">− ${brl(taxas)}</td><td class="${td} font-bold">${brl(liq)}</td><td class="${td} font-bold text-amber-500">${brl(receber)}</td></tr>`;
+  $('vnPlat').innerHTML = t;
+}
 function bindCanal(id){
   $(id).querySelectorAll('[data-c]').forEach(tr=>{
     const go=()=>{ $('fCanal').value = state.canal===tr.dataset.c ? '' : tr.dataset.c; apply(); };
