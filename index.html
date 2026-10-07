@@ -1355,7 +1355,17 @@ function renderVen(){
     return;
   }
   const K = {}; V.cols.forEach((c,i)=>K[c]=i);
-  const vs = V.rows, L = sum(rows,'l');
+  // TRAVA DE DATA FUTURA — o painel nunca contabiliza nada depois de hoje,
+  // venha o que vier das abas. Qualquer linha datada à frente é lançada hoje.
+  const _ag = new Date();
+  const HOJE = new Date(_ag.getTime()-_ag.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  let nFuturas = 0, diaFuturo = '';
+  const vs = V.rows.map(r=>{
+    if(r[K.dia] && r[K.dia] > HOJE){ nFuturas++; if(r[K.dia] > diaFuturo) diaFuturo = r[K.dia];
+      const c = r.slice(); c[K.dia] = HOJE; return c; }
+    return r;
+  });
+  const L = sum(rows,'l');
   const S  = (rs,k) => rs.reduce((a,r)=>a+(+r[K[k]]||0),0);
   const by = (rs,k) => { const m={}; for(const r of rs){ (m[r[K[k]]] ||= []).push(r); } return m; };
 
@@ -1365,7 +1375,12 @@ function renderVen(){
 
   // ---- aplicações
   const A = V.aplic, AK = {}; let apTot=0, apComp=0, apRows=[];
-  if(A && A.rows){ A.cols.forEach((c,i)=>AK[c]=i); apRows = A.rows;
+  if(A && A.rows){ A.cols.forEach((c,i)=>AK[c]=i);
+    apRows = A.rows.map(r=>{
+      if(r[AK.dia] && r[AK.dia] > HOJE){ nFuturas++; if(r[AK.dia] > diaFuturo) diaFuturo = r[AK.dia];
+        const c = r.slice(); c[AK.dia] = HOJE; return c; }
+      return r;
+    });
     apTot  = apRows.reduce((a,r)=>a+(+r[AK.n]||0),0);
     apComp = apRows.filter(r=>+r[AK.completa]===1).reduce((a,r)=>a+(+r[AK.n]||0),0); }
   const apInc = apTot - apComp;
@@ -1458,12 +1473,11 @@ function renderVen(){
   });
   g += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="#e4e4e7"/></svg>`;
   $('vnChart').innerHTML = g;
-  // aviso de datas futuras encontradas nas abas
-  const fut = Object.entries((V.diag)||{}).filter(([,d])=>d.futuras);
-  $('vnChartAviso').innerHTML = fut.length
-    ? `<div class="mt-4 text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-        ${fut.map(([t,d])=>`<b>${fmt(d.futuras)} transaç${d.futuras>1?'ões':'ão'}</b> da aba <b>${t}</b> ${d.futuras>1?'vinham':'vinha'} com data futura (${ddmm(d.data_futura)}) e ${d.futuras>1?'foram lançadas':'foi lançada'} em hoje.`).join('<br>')}
-        <br><span class="text-amber-700">Provavelmente a coluna de data é de vencimento, não de pagamento. O valor continua somado — só a distribuição no gráfico muda.</span></div>`
+  // aviso da trava de data futura
+  $('vnChartAviso').innerHTML = nFuturas
+    ? `<div class="mt-4 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <b>${fmt(nFuturas)} registro${nFuturas>1?'s vinham':' vinha'} com data futura (até ${ddmm(diaFuturo)}) e ${nFuturas>1?'foram lançados':'foi lançado'} em hoje.</b>
+        <br><span class="text-amber-700">A coluna de data de alguma aba está trazendo vencimento em vez de pagamento. Confira no rodapé qual coluna cada aba usou.</span></div>`
     : '';
 
   // ---- helpers de tabela
