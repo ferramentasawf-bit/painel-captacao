@@ -71,6 +71,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
     <div class="flex flex-wrap items-start justify-between gap-5">
      <div>
       <span class="inline-flex items-center gap-2 bg-indigo-600 text-white text-[12px] font-semibold px-3 py-1.5 rounded-md"><svg class="ico ico-sm" style="width:14px;height:14px"><use href="#i-video"/></svg>Webinar <span id="camp"></span></span>
+      <button id="reload" title="Ignora o cache e lê a planilha de novo" class="inline-flex items-center gap-1.5 border bg-white hover:bg-accent text-zinc-600 text-[11px] font-semibold px-2.5 py-1.5 rounded-md ml-1.5 align-middle"><svg class="ico ico-sm"><use href="#i-repeat"/></svg>Atualizar agora</button>
       <h1 id="vTitle" class="text-[32px] font-bold tracking-tight text-zinc-900 mt-2 leading-tight"></h1>
       <p id="vSub" class="text-[13px] text-muted-foreground mt-1"></p>
      </div>
@@ -515,7 +516,7 @@ select:focus-visible,input:focus-visible,button:focus-visible,[tabindex]:focus-v
 <script>
 // ===== CONFIGURAÇÃO =====
 const WEBHOOK_URL = 'https://n8n.pauloaguiarx.com.br/webhook/painel-captacao';
-const ATUALIZAR_A_CADA_MIN = 5;
+const ATUALIZAR_A_CADA_MIN = 15;   // minutos entre revalidações (cache local evita leituras repetidas)
 // Imagem de cada canal (utm_source). Pode ser o site da ferramenta (vira o ícone dela)
 // ou uma imagem: link completo (https://...) ou o nome de um arquivo enviado ao repositório (ex.: 'awsales.png').
 // Canal sem imagem mostra as iniciais.
@@ -1359,18 +1360,46 @@ function setNote(){
   $('note').className = 'text-[11px] text-muted-foreground mt-8 max-w-[760px] leading-relaxed';
   $('note').textContent = `Dados de ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}. ${DATA.removidos ? DATA.removidos+' linhas ignoradas (cadastros de teste ou data de inscrição inválida). ' : ''}Números a partir das colunas da BASE LEADS.`;
 }
-async function refresh(){
+// Cache local: mostra a última leitura na hora e revalida por trás, para não
+// bater no n8n (e na cota do Google Sheets) a cada aba aberta ou F5.
+const CACHE_KEY = 'painel_captacao_cache';
+function lerCache(){
+  try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    return (c && c.ts && c.data) ? c : null; }catch(e){ return null; }
+}
+function gravarCache(data){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data})); }catch(e){}
+}
+let buscando = false;
+async function refresh(silencioso){
+  if(buscando) return; buscando = true;
   try{
     const r = await fetch(WEBHOOK_URL, {cache:'no-store'});
     if(!r.ok) throw new Error('HTTP '+r.status);
-    load(await r.json()); state = read(); route(); markDirty(); setNote();
+    const data = await r.json();
+    gravarCache(data);
+    load(data); state = read(); route(); markDirty(); setNote();
   }catch(e){
-    $('note').className = 'text-[12px] text-red-500 mt-8';
-    $('note').textContent = `Não foi possível ler os dados do n8n (${e.message}). Confira se o workflow está ativo e se WEBHOOK_URL está certa.`;
-  }
+    if(silencioso && rows){                       // já tem dados na tela: só avisa no rodapé
+      setNote();
+      $('note').innerHTML += ` <b class="text-amber-600">A última atualização falhou (${e.message}); os números acima são do cache.</b>`;
+    } else {
+      $('note').className = 'text-[12px] text-red-500 mt-8';
+      $('note').textContent = `Não foi possível ler os dados do n8n (${e.message}). Confira se o workflow está ativo e se WEBHOOK_URL está certa.`;
+    }
+  } finally { buscando = false; }
 }
 if(EMBED){ load(EMBED); state = read(); route(); markDirty(); setNote(); }
-else { route(); refresh(); setInterval(refresh, ATUALIZAR_A_CADA_MIN*60*1000); }
+else {
+  const c = lerCache();
+  if(c){ load(c.data); state = read(); route(); markDirty(); setNote(); }   // pinta na hora
+  else route();
+  const idade = c ? (Date.now()-c.ts)/60000 : Infinity;
+  if(idade >= ATUALIZAR_A_CADA_MIN) refresh(!!c); // só revalida se o cache já venceu
+  setInterval(()=>refresh(true), ATUALIZAR_A_CADA_MIN*60*1000);
+  // botão "Atualizar agora" força a leitura, ignorando o cache
+  const b = $('reload'); if(b) b.onclick = () => refresh(false);
+}
 </script>
 </body>
 </html>
